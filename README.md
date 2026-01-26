@@ -6,7 +6,7 @@ Interactive web portal for exploring DNA barcode coverage gaps in UK biodiversit
 
 ### 1. Update Data (Monthly)
 
-Copy your updated TSV files from the private repo to the `data` folder:
+Copy your updated TSV files from the analysis repo to the `data` folder:
 
 ```powershell
 # From PowerShell or Command Prompt
@@ -19,8 +19,17 @@ copy "C:\GitHub\mind-the-gap\final_result\*.tsv" "C:\GitHub\species\data\"
 cd C:\GitHub\species
 python scripts\build.py
 ```
+### 3. Test website on local version before push to GitHub
 
-### 3. Deploy to GitHub Pages
+```powershell
+cd C:\GitHub\species\docs
+python -m http.server 8000
+```
+
+Then open web browser with http://localhost:8000
+
+
+### 4. Deploy to GitHub Pages
 
 ```powershell
 cd C:\GitHub\species
