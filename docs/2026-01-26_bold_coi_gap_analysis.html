@@ -121,18 +121,95 @@ async function loadData() {
         document.getElementById('loadingIndicator').innerHTML = '<p class="text-danger">Error loading data. Please try refreshing.</p>';
     }
 }
+
+// Cascading dropdown helper functions
+function getUniqueValues(data, column) {
+    return [...new Set(data.map(r => r[column]).filter(Boolean))].sort();
+}
+
+function rebuildSelect(selectId, values, placeholder) {
+    const select = document.getElementById(selectId);
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">' + placeholder + '</option>';
+    values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    });
+    if (values.includes(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+function updateCascadingDropdowns(changedLevel) {
+    const levels = ['kingdom', 'phylum', 'class', 'order', 'family'];
+    const changedIndex = levels.indexOf(changedLevel);
+    const selectIds = ['filterKingdom', 'filterPhylum', 'filterClass', 'filterOrder', 'filterFamily'];
+    
+    // Clear selections below the changed level
+    for (let i = changedIndex + 1; i < levels.length; i++) {
+        document.getElementById(selectIds[i]).value = '';
+    }
+    
+    // Rebuild dropdowns below the changed level
+    let filtered = DATA;
+    
+    const kingdom = document.getElementById('filterKingdom').value;
+    if (kingdom) filtered = filtered.filter(r => r.kingdom === kingdom);
+    
+    if (changedIndex < 1) {
+        rebuildSelect('filterPhylum', getUniqueValues(filtered, 'phylum_division'), 'All Phyla');
+    }
+    
+    const phylum = document.getElementById('filterPhylum').value;
+    if (phylum) filtered = filtered.filter(r => r.phylum_division === phylum);
+    
+    if (changedIndex < 2) {
+        rebuildSelect('filterClass', getUniqueValues(filtered, 'class'), 'All Classes');
+    }
+    
+    const cls = document.getElementById('filterClass').value;
+    if (cls) filtered = filtered.filter(r => r.class === cls);
+    
+    if (changedIndex < 3) {
+        rebuildSelect('filterOrder', getUniqueValues(filtered, 'order'), 'All Orders');
+    }
+    
+    const order = document.getElementById('filterOrder').value;
+    if (order) filtered = filtered.filter(r => r.order === order);
+    
+    if (changedIndex < 4) {
+        rebuildSelect('filterFamily', getUniqueValues(filtered, 'family'), 'All Families');
+    }
+}
+
 function initializeFilters() {
-    const taxonomyFilters = {'filterKingdom':'kingdom','filterPhylum':'phylum_division','filterClass':'class','filterOrder':'order','filterFamily':'family'};
-    for (const [selectId, column] of Object.entries(taxonomyFilters)) {
+    const taxonomyFilters = {
+        'filterKingdom': ['kingdom', 'All Kingdoms'],
+        'filterPhylum': ['phylum_division', 'All Phyla'],
+        'filterClass': ['class', 'All Classes'],
+        'filterOrder': ['order', 'All Orders'],
+        'filterFamily': ['family', 'All Families']
+    };
+    
+    for (const [selectId, [column, placeholder]] of Object.entries(taxonomyFilters)) {
         const select = document.getElementById(selectId);
         if (FILTER_OPTIONS[column]) {
             FILTER_OPTIONS[column].forEach(value => {
                 const option = document.createElement('option');
-                option.value = value; option.textContent = value;
+                option.value = value;
+                option.textContent = value;
                 select.appendChild(option);
             });
         }
     }
+    
+    // Add cascade listeners
+    document.getElementById('filterKingdom').addEventListener('change', () => updateCascadingDropdowns('kingdom'));
+    document.getElementById('filterPhylum').addEventListener('change', () => updateCascadingDropdowns('phylum'));
+    document.getElementById('filterClass').addEventListener('change', () => updateCascadingDropdowns('class'));
+    document.getElementById('filterOrder').addEventListener('change', () => updateCascadingDropdowns('order'));
 }
 function initializeTable() {
     const columns = [
@@ -222,10 +299,23 @@ function updateUrl(filters) {
 }
 function loadFiltersFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    if(params.get('kingdom'))document.getElementById('filterKingdom').value=params.get('kingdom');
-    if(params.get('phylum'))document.getElementById('filterPhylum').value=params.get('phylum');
-    if(params.get('class'))document.getElementById('filterClass').value=params.get('class');
-    if(params.get('order'))document.getElementById('filterOrder').value=params.get('order');
+    // Apply taxonomy filters in order, rebuilding cascades as we go
+    if(params.get('kingdom')){
+        document.getElementById('filterKingdom').value=params.get('kingdom');
+        updateCascadingDropdowns('kingdom');
+    }
+    if(params.get('phylum')){
+        document.getElementById('filterPhylum').value=params.get('phylum');
+        updateCascadingDropdowns('phylum');
+    }
+    if(params.get('class')){
+        document.getElementById('filterClass').value=params.get('class');
+        updateCascadingDropdowns('class');
+    }
+    if(params.get('order')){
+        document.getElementById('filterOrder').value=params.get('order');
+        updateCascadingDropdowns('order');
+    }
     if(params.get('family'))document.getElementById('filterFamily').value=params.get('family');
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
     if(params.get('habitat')){params.get('habitat').split(',').forEach(h=>{const cb=document.getElementById(`habitat${h.charAt(0).toUpperCase()+h.slice(1)}`);if(cb)cb.checked=true;});}
@@ -244,7 +334,19 @@ $(document).ready(function() {
     initializeFilters();
     loadData();
     document.getElementById('applyFilters').addEventListener('click',applyFilters);
-    document.getElementById('resetFilters').addEventListener('click',()=>{document.querySelectorAll('select').forEach(s=>s.value='');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);document.getElementById('filterProtected').checked=false;applyFilters();});
+    document.getElementById('resetFilters').addEventListener('click',()=>{
+        document.querySelectorAll('select').forEach(s=>s.value='');
+        // Rebuild all dropdowns with full options from DATA
+        rebuildSelect('filterKingdom', getUniqueValues(DATA, 'kingdom'), 'All Kingdoms');
+        rebuildSelect('filterPhylum', getUniqueValues(DATA, 'phylum_division'), 'All Phyla');
+        rebuildSelect('filterClass', getUniqueValues(DATA, 'class'), 'All Classes');
+        rebuildSelect('filterOrder', getUniqueValues(DATA, 'order'), 'All Orders');
+        rebuildSelect('filterFamily', getUniqueValues(DATA, 'family'), 'All Families');
+        document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
+        document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
+        document.getElementById('filterProtected').checked=false;
+        applyFilters();
+    });
     document.querySelectorAll('.status-btn').forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active')));
     document.getElementById('shareUrl').addEventListener('click',()=>{navigator.clipboard.writeText(window.location.href).then(()=>{const indicator=document.getElementById('urlIndicator');indicator.classList.add('show');setTimeout(()=>indicator.classList.remove('show'),2000);});});
     document.getElementById('downloadFiltered').addEventListener('click',()=>downloadCSV(filteredData,'filtered_gap_analysis.csv'));
