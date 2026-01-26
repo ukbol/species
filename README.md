@@ -1,4 +1,5 @@
-# UKBOL Gap Analysis Data Portal
+[![DOI](https://zenodo.org/badge/1142112416.svg)](https://doi.org/10.5281/zenodo.18378765)
+# UKBOL Species Data Portal
 
 Interactive web portal for exploring DNA barcode coverage gaps in UK biodiversity.
 
@@ -37,8 +38,7 @@ git add .
 git commit -m "Update gap analysis data - $(Get-Date -Format 'yyyy-MM-dd')"
 git push
 ```
-
-That's it! The website will update automatically via GitHub Pages.
+The website will update automatically via GitHub Pages.
 
 ## Project Structure
 
@@ -73,14 +73,9 @@ Create `data/zenodo_links.csv` with columns:
 - `url`: Link to Zenodo
 - `doi`: DOI identifier
 
-Example:
-```csv
-title,description,url,doi
-"UKBOL COI Raw Reads","Complete FASTQ files for COI sequencing","https://zenodo.org/record/12345","10.5281/zenodo.12345"
-```
 
 
-The site is available at: `https://ukbol.github.io/species/index.html`
+The site is available at: [https://ukbol.github.io/species/index.html](https://ukbol.github.io/species/index.html)
 
 ## Requirements
 
