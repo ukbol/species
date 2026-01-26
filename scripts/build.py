@@ -108,7 +108,8 @@ def get_filter_options(df):
 
 
 def generate_index_html(genes_data, zenodo_links, output_dir, build_date):
-    total_species = sum(g['stats']['total_species'] for g in genes_data)
+    # Use unique species count (same across all datasets) instead of sum
+    valid_species = genes_data[0]['stats']['total_species'] if genes_data else 0
     all_status = {}
     for g in genes_data:
         for status, count in g['stats']['status_counts'].items():
@@ -150,7 +151,7 @@ footer a{{color:rgba(255,255,255,.9);}}
 </div></div></div>
 <div class="container">
 <div class="row g-4 mb-5">
-<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{total_species:,}</div><div class="text-muted">Total Species Assessed</div></div></div>
+<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{valid_species:,}</div><div class="text-muted">Valid Species Assessed</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{len(genes_data)}</div><div class="text-muted">Gene Regions</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number text-success">{all_status.get('GREEN', 0):,}</div><div class="text-muted">Species with Good Coverage</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number text-danger">{all_status.get('RED', 0) + all_status.get('BLACK', 0):,}</div><div class="text-muted">Priority Gaps</div></div></div>
@@ -166,10 +167,10 @@ footer a{{color:rgba(255,255,255,.9);}}
 <div class="col-md-6">
 <p><strong>Traffic Light System:</strong></p>
 <div class="d-flex flex-wrap gap-2">
-<span class="status-badge status-GREEN">GREEN - Good coverage</span>
-<span class="status-badge status-AMBER">AMBER - Partial coverage</span>
-<span class="status-badge status-RED">RED - Priority gap</span>
-<span class="status-badge status-BLACK">BLACK - No data</span>
+<span class="status-badge status-GREEN">GREEN - Valid name with data</span>
+<span class="status-badge status-AMBER">AMBER - Valid and synonyms with data</span>
+<span class="status-badge status-RED">RED - Taxonomic conflict found in data</span>
+<span class="status-badge status-BLACK">BLACK - No data (gaps)</span>
 </div></div></div></div>
 <h3 class="mb-4">Available Datasets</h3>
 <div class="row g-4 mb-5">''')
@@ -217,7 +218,7 @@ footer a{{color:rgba(255,255,255,.9);}}
     html_parts.append(f'''</div>
 <footer><div class="container text-center">
 <p class="mb-2">UK Barcode of Life (UKBOL) Gap Analysis Portal</p>
-<p class="small mb-0">Part of <a href="https://biodiversitygenomics.eu/" target="_blank">Biodiversity Genomics Europe</a> | Data generated {build_date}</p>
+<p class="small mb-0">Part of <a href="https://ibol.org/" target="_blank">International Barcode of Life</a> | Data generated {build_date}</p>
 </div></footer>
 </body></html>''')
 
