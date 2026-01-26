@@ -70,14 +70,8 @@ title,description,url,doi
 "UKBOL COI Raw Reads","Complete FASTQ files for COI sequencing","https://zenodo.org/record/12345","10.5281/zenodo.12345"
 ```
 
-## GitHub Pages Setup
 
-1. Go to repository Settings > Pages
-2. Set Source to "Deploy from a branch"
-3. Set Branch to "main" and folder to "/docs"
-4. Save
-
-The site will be available at: `https://[username].github.io/species/`
+The site is available at: `https://ukbol.github.io/species/index.html`
 
 ## Requirements
 
