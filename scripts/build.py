@@ -29,6 +29,25 @@ STATUS_COLORS = {
     'BLUE': '#0d6efd', 'BLACK': '#343a40',
 }
 
+# Shortened status labels for display
+STATUS_LABELS = {
+    'GREEN': 'OK - Valid',
+    'BLUE': 'OK - Synonym',
+    'AMBER': 'OK - Valid + Synonym',
+    'RED': 'ID Conflict',
+    'BLACK': 'Missing',
+}
+
+# Default taxonomy filters for specific gene regions
+GENE_DEFAULT_FILTERS = {
+    'coi': {'kingdom': 'Animalia'},
+    'rbcl': {'kingdom': 'Plantae'},
+    'its': {'kingdom': 'Fungi'},
+    'unite': {'kingdom': 'Fungi'},
+    '12s': {'phylum': 'Chordata'},
+    # 16s has no default filter
+}
+
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
 
 CORE_COLUMNS = [
@@ -209,10 +228,11 @@ footer a{{color:rgba(255,255,255,.9);}}
 <div class="col-md-6">
 <p><strong>Traffic Light System:</strong></p>
 <div class="d-flex flex-wrap gap-2">
-<span class="status-badge status-GREEN">GREEN - Valid name with data</span>
-<span class="status-badge status-AMBER">AMBER - Valid and synonyms with data</span>
-<span class="status-badge status-RED">RED - Taxonomic conflict found in data</span>
-<span class="status-badge status-BLACK">BLACK - No data (gaps)</span>
+<span class="status-badge status-GREEN">OK - Valid</span>
+<span class="status-badge status-BLUE">OK - Synonym</span>
+<span class="status-badge status-AMBER">OK - Valid + Synonym</span>
+<span class="status-badge status-RED">ID Conflict</span>
+<span class="status-badge status-BLACK">Missing</span>
 </div></div></div></div>
 <h3 class="mb-4">Available Datasets</h3>
 <div class="row g-4 mb-5">''')
@@ -230,8 +250,8 @@ footer a{{color:rgba(255,255,255,.9);}}
                 bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
         bar_html = ''.join(bar_segments)
         
-        badges = ''.join([f'<small class="status-badge status-{s}">{s}: {status_counts.get(s, 0):,}</small>' 
-                         for s in ['GREEN', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
+        badges = ''.join([f'<small class="status-badge status-{s}">{STATUS_LABELS.get(s, s)}: {status_counts.get(s, 0):,}</small>'
+                         for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
         
         html_parts.append(f'''<div class="col-md-6 col-lg-4">
 <a href="{gene['filename']}" class="text-decoration-none">
@@ -271,9 +291,19 @@ footer a{{color:rgba(255,255,255,.9);}}
 
 
 
+def get_default_filter_for_gene(gene_name):
+    """Determine default taxonomy filter based on gene name."""
+    gene_lower = gene_name.lower()
+    for gene_key, filters in GENE_DEFAULT_FILTERS.items():
+        if gene_key in gene_lower:
+            return filters
+    return {}
+
+
 def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date):
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
-    
+    default_filters = get_default_filter_for_gene(gene_name)
+
     html = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -300,6 +330,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .url-indicator{position:fixed;bottom:20px;right:20px;background:#fff;padding:.75rem 1rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:.85rem;z-index:1000;display:none;}
 .url-indicator.show{display:block;}
 table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
+/* Mobile support */
+.status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+.filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
+@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
 </head>
 <body>
@@ -325,11 +359,11 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 <div class="mb-3">
 <label class="form-label fw-bold">Coverage Status</label>
 <div class="d-flex flex-wrap gap-1">
-<button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">GREEN</button>
-<button class="btn btn-sm btn-outline-warning status-btn active" data-status="AMBER">AMBER</button>
-<button class="btn btn-sm btn-outline-danger status-btn active" data-status="RED">RED</button>
-<button class="btn btn-sm btn-outline-primary status-btn active" data-status="BLUE">BLUE</button>
-<button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">BLACK</button>
+<button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">OK - Valid</button>
+<button class="btn btn-sm btn-outline-primary status-btn active" data-status="BLUE">OK - Synonym</button>
+<button class="btn btn-sm btn-outline-warning status-btn active" data-status="AMBER">OK - V+S</button>
+<button class="btn btn-sm btn-outline-danger status-btn active" data-status="RED">ID Conflict</button>
+<button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">Missing</button>
 </div></div>
 <div class="mb-3">
 <label class="form-label fw-bold">Habitat</label>
@@ -376,6 +410,8 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
+const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
+const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
 const TSV_FILE = 'data/''' + gene_name + '''.tsv';
 let DATA = [], filteredData = [], table = null;
@@ -493,7 +529,7 @@ function initializeTable() {
         {data:'taxon_authority',title:'Authority'},
         {data:'order',title:'Order'},
         {data:'family',title:'Family'},
-        {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${data}</span>`:''},
+        {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
         {data:'bags_grade',title:'Grade'},
         {data:'number_records',title:'Records'}
     ];
@@ -542,23 +578,32 @@ function collectFilters() {
 function updateActiveFiltersDisplay(filters) {
     const container = document.getElementById('activeFilters');
     container.innerHTML = '';
-    const addTag = (label, value, clearFn) => {const tag = document.createElement('div');tag.className='filter-tag';tag.innerHTML=`${label}: ${value} <button onclick="${clearFn}">x</button>`;container.appendChild(tag);};
+    const addTag = (label, value, clearFn) => {const tag = document.createElement('div');tag.className='filter-tag';tag.innerHTML=`${label}: ${value} <button onclick="${clearFn}">×</button>`;container.appendChild(tag);};
     if (filters.kingdom) addTag('Kingdom',filters.kingdom,"document.getElementById('filterKingdom').value='';applyFilters()");
     if (filters.phylum) addTag('Phylum',filters.phylum,"document.getElementById('filterPhylum').value='';applyFilters()");
     if (filters.class) addTag('Class',filters.class,"document.getElementById('filterClass').value='';applyFilters()");
     if (filters.order) addTag('Order',filters.order,"document.getElementById('filterOrder').value='';applyFilters()");
     if (filters.family) addTag('Family',filters.family,"document.getElementById('filterFamily').value='';applyFilters()");
+    // Show status filters when not all are selected
+    const allStatuses = ['GREEN','BLUE','AMBER','RED','BLACK'];
+    if (filters.statuses.length > 0 && filters.statuses.length < 5) {
+        const excludedStatuses = allStatuses.filter(s => !filters.statuses.includes(s));
+        excludedStatuses.forEach(status => {
+            addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
+        });
+    }
     filters.habitats.forEach(h => addTag('Habitat',h,`document.getElementById('habitat${h.charAt(0).toUpperCase()+h.slice(1)}').checked=false;applyFilters()`));
     if (filters.protected) addTag('Filter','Protected only',"document.getElementById('filterProtected').checked=false;applyFilters()");
 }
 function updateCharts() {
     const statusCounts = {};
     filteredData.forEach(row => {const status = row.species_status || 'Unknown';statusCounts[status] = (statusCounts[status] || 0) + 1;});
-    Plotly.newPlot('pieChart',[{values:Object.values(statusCounts),labels:Object.keys(statusCounts),type:'pie',hole:0.4,marker:{colors:Object.keys(statusCounts).map(s=>STATUS_COLORS[s]||'#6c757d')},textinfo:'label+percent',textposition:'outside'}],{margin:{t:20,b:20,l:20,r:20},showlegend:false},{responsive:true});
+    const pieLabels = Object.keys(statusCounts).map(s => STATUS_LABELS[s] || s);
+    Plotly.newPlot('pieChart',[{values:Object.values(statusCounts),labels:pieLabels,type:'pie',hole:0.4,marker:{colors:Object.keys(statusCounts).map(s=>STATUS_COLORS[s]||'#6c757d')},textinfo:'label+percent',textposition:'outside'}],{margin:{t:20,b:20,l:20,r:20},showlegend:false},{responsive:true});
     const orderData = {};
     filteredData.forEach(row => {const order = row.order || 'Unknown';const status = row.species_status || 'Unknown';if(!orderData[order])orderData[order]={};orderData[order][status]=(orderData[order][status]||0)+1;});
     const sortedOrders = Object.entries(orderData).map(([order,counts])=>({order,total:Object.values(counts).reduce((a,b)=>a+b,0),counts})).sort((a,b)=>b.total-a.total).slice(0,20);
-    const barTraces = ['GREEN','AMBER','RED','BLUE','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
+    const barTraces = ['GREEN','BLUE','AMBER','RED','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
     Plotly.newPlot('barChart',barTraces,{barmode:'stack',margin:{t:20,b:100,l:50,r:20},legend:{orientation:'h',y:1.1},xaxis:{tickangle:-45}},{responsive:true});
 }
 function updateUrl(filters) {
@@ -575,6 +620,8 @@ function updateUrl(filters) {
 }
 function loadFiltersFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    let hasUrlFilters = params.toString().length > 0;
+
     // Apply taxonomy filters in order, rebuilding cascades as we go
     if(params.get('kingdom')){
         document.getElementById('filterKingdom').value=params.get('kingdom');
@@ -596,7 +643,21 @@ function loadFiltersFromUrl() {
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
     if(params.get('habitat')){params.get('habitat').split(',').forEach(h=>{const cb=document.getElementById(`habitat${h.charAt(0).toUpperCase()+h.slice(1)}`);if(cb)cb.checked=true;});}
     if(params.get('protected'))document.getElementById('filterProtected').checked=true;
-    if(params.toString())applyFilters();
+
+    // Apply default filters if no URL filters present
+    if(!hasUrlFilters && Object.keys(DEFAULT_FILTERS).length > 0) {
+        if(DEFAULT_FILTERS.kingdom){
+            document.getElementById('filterKingdom').value=DEFAULT_FILTERS.kingdom;
+            updateCascadingDropdowns('kingdom');
+        }
+        if(DEFAULT_FILTERS.phylum){
+            document.getElementById('filterPhylum').value=DEFAULT_FILTERS.phylum;
+            updateCascadingDropdowns('phylum');
+        }
+        applyFilters();
+    } else if(hasUrlFilters) {
+        applyFilters();
+    }
 }
 function downloadCSV(data,filename) {
     if(data.length===0)return;
@@ -623,7 +684,22 @@ $(document).ready(function() {
         document.getElementById('filterProtected').checked=false;
         applyFilters();
     });
-    document.querySelectorAll('.status-btn').forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active')));
+    // Status button handlers - using both click and touchend for mobile support
+    document.querySelectorAll('.status-btn').forEach(btn=>{
+        const toggleStatus = (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            applyFilters();
+        };
+        btn.addEventListener('click', toggleStatus);
+    });
+    // Habitat and protection filters - auto-apply on change
+    document.querySelectorAll('.habitat-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
+    document.getElementById('filterProtected').addEventListener('change', applyFilters);
+    // Taxonomy dropdowns - auto-apply on change
+    ['filterKingdom','filterPhylum','filterClass','filterOrder','filterFamily'].forEach(id=>{
+        document.getElementById(id).addEventListener('change', applyFilters);
+    });
     document.getElementById('shareUrl').addEventListener('click',()=>{navigator.clipboard.writeText(window.location.href).then(()=>{const indicator=document.getElementById('urlIndicator');indicator.classList.add('show');setTimeout(()=>indicator.classList.remove('show'),2000);});});
     document.getElementById('downloadFiltered').addEventListener('click',()=>downloadCSV(filteredData,'filtered_gap_analysis.csv'));
     document.getElementById('downloadAll').addEventListener('click',()=>{window.location.href=TSV_FILE;});
@@ -701,10 +777,13 @@ def main():
         json_size = json_path.stat().st_size / (1024 * 1024)
         print(f"  - Generated {gene_name}.json.gz ({json_size:.1f} MB)")
         
-        # Copy original TSV
+        # Copy original TSV (skip if same file)
         tsv_dest = output_dir / 'data' / f'{gene_name}.tsv'
-        shutil.copy(tsv_path, tsv_dest)
-        print(f"  - Copied {gene_name}.tsv")
+        if tsv_path.resolve() != tsv_dest.resolve():
+            shutil.copy(tsv_path, tsv_dest)
+            print(f"  - Copied {gene_name}.tsv")
+        else:
+            print(f"  - TSV already in output directory")
         
         # Generate HTML
         generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date)
