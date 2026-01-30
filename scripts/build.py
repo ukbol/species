@@ -662,7 +662,8 @@ function loadFiltersFromUrl() {
 function downloadCSV(data,filename) {
     if(data.length===0)return;
     const headers=Object.keys(data[0]);
-    const csv=[headers.join(','),...data.map(row=>headers.map(h=>{let val=row[h]||'';if(typeof val==='string'&&(val.includes(',')||val.includes('"')))val='"'+val.replace(/"/g,'""')+'"';return val;}).join(','))].join('\\n');
+    const quoteField=(val)=>{val=String(val||'');if(val.includes(',')||val.includes('"')||val.includes('\\n'))return '"'+val.replace(/"/g,'""')+'"';return val;};
+    const csv=[headers.map(quoteField).join(','),...data.map(row=>headers.map(h=>quoteField(row[h])).join(','))].join('\\n');
     const blob=new Blob([csv],{type:'text/csv'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);

@@ -35,7 +35,7 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 <div class="container-fluid">
 <a class="navbar-brand" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Back to Portal</a>
 <span class="navbar-text fw-bold">RBCL (NCBI)</span>
-<span class="navbar-text text-light opacity-75">74,599 species | Updated 2026-01-27</span>
+<span class="navbar-text text-light opacity-75">74,599 species | Updated 2026-01-30</span>
 </div></nav>
 <div class="container-fluid px-4">
 <div class="row">
@@ -356,7 +356,8 @@ function loadFiltersFromUrl() {
 function downloadCSV(data,filename) {
     if(data.length===0)return;
     const headers=Object.keys(data[0]);
-    const csv=[headers.join(','),...data.map(row=>headers.map(h=>{let val=row[h]||'';if(typeof val==='string'&&(val.includes(',')||val.includes('"')))val='"'+val.replace(/"/g,'""')+'"';return val;}).join(','))].join('\n');
+    const quoteField=(val)=>{val=String(val||'');if(val.includes(',')||val.includes('"')||val.includes('\n'))return '"'+val.replace(/"/g,'""')+'"';return val;};
+    const csv=[headers.map(quoteField).join(','),...data.map(row=>headers.map(h=>quoteField(row[h])).join(','))].join('\n');
     const blob=new Blob([csv],{type:'text/csv'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
