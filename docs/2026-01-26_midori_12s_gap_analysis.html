@@ -234,13 +234,13 @@ function initializeTable() {
             const bins = row.bin_uris.split(';').map(b => b.trim()).filter(b => b);
             if (bins.length > 0) {
                 const query = bins.map(b => b + '[bin]').join(',');
-                const url = 'https://portal.boldsystems.org/result?query=' + encodeURIComponent(query);
+                const url = 'https://portal.boldsystems.org/result?query=' + query;
                 return '<span class="data-link"><a href="' + url + '" target="_blank" rel="noopener">&#128279;</a></span>';
             }
         }
         // Check for UNITE Species Hypothesis IDs (SH*.FU pattern)
-        if (row.otu_id && row.otu_id.trim()) {
-            const ids = row.otu_id.split(';').map(id => id.trim()).filter(id => id);
+        if (row.otu_ids && row.otu_ids.trim()) {
+            const ids = row.otu_ids.split(';').map(id => id.trim()).filter(id => id);
             const shIds = ids.filter(id => /^SH\d+\.\d+FU$/.test(id));
             if (shIds.length > 0) {
                 const links = shIds.map(sh => {
