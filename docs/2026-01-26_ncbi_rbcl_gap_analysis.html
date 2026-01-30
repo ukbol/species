@@ -26,6 +26,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 /* Truncated cells for long text */
 .truncate-cell{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+/* Data link icons */
+.data-link a{text-decoration:none;margin-right:0.25rem;font-size:1rem;}
+.data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
@@ -225,6 +228,30 @@ function initializeTable() {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     };
     const truncateRender = (data) => data ? `<span class="truncate-cell" title="${escapeHtml(data)}">${escapeHtml(data)}</span>` : '';
+    const dataLinkRender = (data, type, row) => {
+        // Check for BOLD BIN URIs first
+        if (row.bin_uris && row.bin_uris.trim()) {
+            const bins = row.bin_uris.split(';').map(b => b.trim()).filter(b => b);
+            if (bins.length > 0) {
+                const query = bins.map(b => b + '[bin]').join(',');
+                const url = 'https://portal.boldsystems.org/result?query=' + encodeURIComponent(query);
+                return '<span class="data-link"><a href="' + url + '" target="_blank" rel="noopener">&#128279;</a></span>';
+            }
+        }
+        // Check for UNITE Species Hypothesis IDs (SH*.FU pattern)
+        if (row.otu_id && row.otu_id.trim()) {
+            const ids = row.otu_id.split(';').map(id => id.trim()).filter(id => id);
+            const shIds = ids.filter(id => /^SH\d+\.\d+FU$/.test(id));
+            if (shIds.length > 0) {
+                const links = shIds.map(sh => {
+                    const url = 'https://dx.doi.org/10.15156/BIO/' + sh;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
+        return '—';
+    };
     const columns = [
         {data:'taxon_name',title:'Species'},
         {data:'synonyms',title:'Synonyms',render:truncateRender},
@@ -233,7 +260,8 @@ function initializeTable() {
         {data:'family',title:'Family'},
         {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
         {data:'bags_grade',title:'Grade'},
-        {data:'number_records',title:'Records'}
+        {data:'number_records',title:'Records'},
+        {data:null,title:'Data Link',render:dataLinkRender,orderable:false}
     ];
     table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true});
 }

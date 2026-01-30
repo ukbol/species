@@ -60,6 +60,7 @@ DISPLAY_COLUMNS = [
     ('species_status', 'Status'),
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
+    ('data_link', 'Data Link'),
 ]
 
 # Columns that should be truncated with hover tooltip (long text fields)
@@ -158,11 +159,17 @@ def compute_cross_gene_stats(dataframes):
     if not dataframes:
         return {'valid_species': 0, 'species_with_data': 0, 'true_gaps': 0}
     
+    # Filter to only dataframes that have the required columns
+    valid_dfs = [df for df in dataframes if 'taxon_name' in df.columns and 'species_status' in df.columns]
+    
+    if not valid_dfs:
+        return {'valid_species': 0, 'species_with_data': 0, 'true_gaps': 0}
+    
     # Start with first dataset as base (deduplicated)
-    base_df = dataframes[0][['taxon_name']].drop_duplicates()
+    base_df = valid_dfs[0][['taxon_name']].drop_duplicates()
     
     # Merge status from each dataset
-    for i, df in enumerate(dataframes):
+    for i, df in enumerate(valid_dfs):
         df_dedup = df[['taxon_name', 'species_status']].drop_duplicates(subset='taxon_name', keep='first')
         df_dedup = df_dedup.rename(columns={'species_status': f'status_{i}'})
         base_df = base_df.merge(df_dedup, on='taxon_name', how='inner')
@@ -185,7 +192,7 @@ def compute_cross_gene_stats(dataframes):
 
 
 
-def generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_gene_stats=None):
+def generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_gene_stats=None, dataset_metadata=None):
     # Use cross-gene stats if provided, otherwise fall back to simple calculation
     if cross_gene_stats:
         valid_species = cross_gene_stats['valid_species']
@@ -297,10 +304,25 @@ footer a{{color:rgba(255,255,255,.9);}}
 </div></div></div>''')
         html_parts.append('</div>')
 
+    # Build dataset metadata table if available
+    metadata_html = ''
+    if dataset_metadata is not None and len(dataset_metadata) > 0:
+        metadata_rows = ''.join([
+            f'<tr><td>{row.get("Gene", "")}</td><td>{row.get("Database", "")}</td><td>{row.get("Version", "")}</td><td><a href="{row.get("Link", "#")}" target="_blank">Source</a></td></tr>'
+            for _, row in dataset_metadata.iterrows()
+        ])
+        metadata_html = f'''<div class="mt-4">
+<h6 class="text-light mb-2">Reference Database Versions</h6>
+<table class="table table-sm table-dark table-striped" style="max-width:600px;margin:0 auto;font-size:.85rem;">
+<thead><tr><th>Gene</th><th>Database</th><th>Version</th><th>Link</th></tr></thead>
+<tbody>{metadata_rows}</tbody>
+</table></div>'''
+
     html_parts.append(f'''</div>
 <footer><div class="container text-center">
 <p class="mb-2">UK Barcode of Life (UKBOL) Gap Analysis Portal</p>
 <p class="small mb-0">Part of <a href="https://ibol.org/" target="_blank">International Barcode of Life</a> | Data generated {build_date}</p>
+{metadata_html}
 </div></footer>
 </body></html>''')
 
@@ -352,6 +374,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 /* Truncated cells for long text */
 .truncate-cell{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+/* Data link icons */
+.data-link a{text-decoration:none;margin-right:0.25rem;font-size:1rem;}
+.data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
@@ -551,6 +576,30 @@ function initializeTable() {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     };
     const truncateRender = (data) => data ? `<span class="truncate-cell" title="${escapeHtml(data)}">${escapeHtml(data)}</span>` : '';
+    const dataLinkRender = (data, type, row) => {
+        // Check for BOLD BIN URIs first
+        if (row.bin_uris && row.bin_uris.trim()) {
+            const bins = row.bin_uris.split(';').map(b => b.trim()).filter(b => b);
+            if (bins.length > 0) {
+                const query = bins.map(b => b + '[bin]').join(',');
+                const url = 'https://portal.boldsystems.org/result?query=' + encodeURIComponent(query);
+                return '<span class="data-link"><a href="' + url + '" target="_blank" rel="noopener">&#128279;</a></span>';
+            }
+        }
+        // Check for UNITE Species Hypothesis IDs (SH*.FU pattern)
+        if (row.otu_id && row.otu_id.trim()) {
+            const ids = row.otu_id.split(';').map(id => id.trim()).filter(id => id);
+            const shIds = ids.filter(id => /^SH\\d+\\.\\d+FU$/.test(id));
+            if (shIds.length > 0) {
+                const links = shIds.map(sh => {
+                    const url = 'https://dx.doi.org/10.15156/BIO/' + sh;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
+        return '—';
+    };
     const columns = [
         {data:'taxon_name',title:'Species'},
         {data:'synonyms',title:'Synonyms',render:truncateRender},
@@ -559,7 +608,8 @@ function initializeTable() {
         {data:'family',title:'Family'},
         {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
         {data:'bags_grade',title:'Grade'},
-        {data:'number_records',title:'Records'}
+        {data:'number_records',title:'Records'},
+        {data:null,title:'Data Link',render:dataLinkRender,orderable:false}
     ];
     table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true});
 }
@@ -840,7 +890,17 @@ def main():
     cross_gene_stats = compute_cross_gene_stats(all_dataframes)
     print(f"  Cross-gene stats: {cross_gene_stats}")
     
-    generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_gene_stats)
+    # Load dataset metadata if available
+    dataset_metadata = None
+    metadata_path = script_dir / 'metadata' / 'dataset_metadata.tsv'
+    if metadata_path.exists():
+        try:
+            dataset_metadata = pd.read_csv(metadata_path, sep='\t', encoding='utf-8')
+            print(f"  Loaded dataset metadata: {len(dataset_metadata)} entries")
+        except Exception as e:
+            print(f"  Warning: Could not read dataset metadata: {e}")
+    
+    generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_gene_stats, dataset_metadata)
     
     print(f"\n[OK] Build complete!")
     print(f"   Output: {output_dir}")
