@@ -24,6 +24,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .url-indicator{position:fixed;bottom:20px;right:20px;background:#fff;padding:.75rem 1rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:.85rem;z-index:1000;display:none;}
 .url-indicator.show{display:block;}
 table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
+/* Truncated cells for long text */
+.truncate-cell{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
@@ -218,9 +220,15 @@ function initializeFilters() {
     document.getElementById('filterOrder').addEventListener('change', () => updateCascadingDropdowns('order'));
 }
 function initializeTable() {
+    const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    };
+    const truncateRender = (data) => data ? `<span class="truncate-cell" title="${escapeHtml(data)}">${escapeHtml(data)}</span>` : '';
     const columns = [
         {data:'taxon_name',title:'Species'},
-        {data:'taxon_authority',title:'Authority'},
+        {data:'synonyms',title:'Synonyms',render:truncateRender},
+        {data:'other_names',title:'Other names',render:truncateRender},
         {data:'order',title:'Order'},
         {data:'family',title:'Family'},
         {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
