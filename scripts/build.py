@@ -414,9 +414,14 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 </div></div>
 <div class="mb-3">
 <label class="form-label fw-bold">Habitat</label>
-<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="marine" id="habitatMarine"><label class="form-check-label" for="habitatMarine">Marine</label></div>
-<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="freshwater" id="habitatFreshwater"><label class="form-check-label" for="habitatFreshwater">Freshwater</label></div>
-<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="terrestrial" id="habitatTerrestrial"><label class="form-check-label" for="habitatTerrestrial">Terrestrial</label></div>
+<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="freshwater_ukceh" id="habitatFreshwaterUkceh"><label class="form-check-label" for="habitatFreshwaterUkceh">Freshwater (UKCEH)</label></div>
+<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="freshwater" id="habitatFreshwater"><label class="form-check-label" for="habitatFreshwater">Freshwater (UKSI)</label></div>
+<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="marine" id="habitatMarine"><label class="form-check-label" for="habitatMarine">Marine (UKSI)</label></div>
+<div class="form-check"><input class="form-check-input habitat-filter" type="checkbox" value="terrestrial" id="habitatTerrestrial"><label class="form-check-label" for="habitatTerrestrial">Terrestrial (UKSI)</label></div>
+</div>
+<div class="mb-3">
+<label class="form-label fw-bold">Assemblage</label>
+<div class="form-check"><input class="form-check-input assemblage-filter" type="checkbox" value="freshbase" id="assemblageFreshbase"><label class="form-check-label" for="assemblageFreshbase">Freshwater macroinverts</label></div>
 </div>
 <div class="mb-3">
 <label class="form-label fw-bold">Protection Status</label>
@@ -623,8 +628,12 @@ function applyFilters() {
         if (filters.family && row.family !== filters.family) return false;
         if (filters.statuses.length > 0 && !filters.statuses.includes(row.species_status)) return false;
         if (filters.habitats.length > 0) {
-            const hasHabitat = (filters.habitats.includes('marine') && row.marine_flag === 'Y') || (filters.habitats.includes('freshwater') && row.freshwater === 'Y') || (filters.habitats.includes('terrestrial') && row.terrestrial_freshwater_flag === 'Y');
+            const hasHabitat = (filters.habitats.includes('marine') && row.marine_flag === 'Y') || (filters.habitats.includes('freshwater') && row.freshwater === 'Y') || (filters.habitats.includes('terrestrial') && row.terrestrial_freshwater_flag === 'Y') || (filters.habitats.includes('freshwater_ukceh') && row.ukceh_freshwater_list === 'Y');
             if (!hasHabitat) return false;
+        }
+        if (filters.assemblages.length > 0) {
+            const hasAssemblage = (filters.assemblages.includes('freshbase') && row.freshbase === 'Y');
+            if (!hasAssemblage) return false;
         }
         if (filters.protected) {
             const hasAnyProtection = JNCC_COLUMNS.some(col => row[col.original] && row[col.original] !== '');
@@ -639,9 +648,10 @@ function applyFilters() {
     updateUrl(filters);
 }
 function collectFilters() {
-    const activeStatuses = [], activeHabitats = [];
+    const activeStatuses = [], activeHabitats = [], activeAssemblages = [];
     document.querySelectorAll('.status-btn.active').forEach(btn => activeStatuses.push(btn.dataset.status));
     document.querySelectorAll('.habitat-filter:checked').forEach(cb => activeHabitats.push(cb.value));
+    document.querySelectorAll('.assemblage-filter:checked').forEach(cb => activeAssemblages.push(cb.value));
     return {
         kingdom:document.getElementById('filterKingdom').value,
         phylum:document.getElementById('filterPhylum').value,
@@ -650,6 +660,7 @@ function collectFilters() {
         family:document.getElementById('filterFamily').value,
         statuses:activeStatuses,
         habitats:activeHabitats,
+        assemblages:activeAssemblages,
         protected:document.getElementById('filterProtected').checked
     };
 }
@@ -670,7 +681,12 @@ function updateActiveFiltersDisplay(filters) {
             addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
         });
     }
-    filters.habitats.forEach(h => addTag('Habitat',h,`document.getElementById('habitat${h.charAt(0).toUpperCase()+h.slice(1)}').checked=false;applyFilters()`));
+    const habitatLabels = {'marine':'Marine (UKSI)','freshwater':'Freshwater (UKSI)','terrestrial':'Terrestrial (UKSI)','freshwater_ukceh':'Freshwater (UKCEH)'};
+    const habitatIds = {'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};
+    filters.habitats.forEach(h => addTag('Habitat',habitatLabels[h]||h,`document.getElementById('${habitatIds[h]}').checked=false;applyFilters()`));
+    const assemblageLabels = {'freshbase':'Freshwater macroinverts'};
+    const assemblageIds = {'freshbase':'assemblageFreshbase'};
+    filters.assemblages.forEach(a => addTag('Assemblage',assemblageLabels[a]||a,`document.getElementById('${assemblageIds[a]}').checked=false;applyFilters()`));
     if (filters.protected) addTag('Filter','Protected only',"document.getElementById('filterProtected').checked=false;applyFilters()");
 }
 function updateCharts() {
@@ -693,6 +709,7 @@ function updateUrl(filters) {
     if(filters.family)params.set('family',filters.family);
     if(filters.statuses.length<5)params.set('status',filters.statuses.join(','));
     if(filters.habitats.length>0)params.set('habitat',filters.habitats.join(','));
+    if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
     if(filters.protected)params.set('protected','1');
     window.history.replaceState({},'',window.location.pathname+(params.toString()?'?'+params.toString():''));
 }
@@ -719,7 +736,8 @@ function loadFiltersFromUrl() {
     }
     if(params.get('family'))document.getElementById('filterFamily').value=params.get('family');
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
-    if(params.get('habitat')){params.get('habitat').split(',').forEach(h=>{const cb=document.getElementById(`habitat${h.charAt(0).toUpperCase()+h.slice(1)}`);if(cb)cb.checked=true;});}
+    if(params.get('habitat')){const habitatIdMap={'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};params.get('habitat').split(',').forEach(h=>{const id=habitatIdMap[h];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
+    if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('protected'))document.getElementById('filterProtected').checked=true;
 
     // Apply default filters if no URL filters present
@@ -760,6 +778,7 @@ $(document).ready(function() {
         rebuildSelect('filterFamily', getUniqueValues(DATA, 'family'), 'All Families');
         document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
         document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
+        document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.checked=false);
         document.getElementById('filterProtected').checked=false;
         applyFilters();
     });
@@ -774,6 +793,7 @@ $(document).ready(function() {
     });
     // Habitat and protection filters - auto-apply on change
     document.querySelectorAll('.habitat-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
+    document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
     document.getElementById('filterProtected').addEventListener('change', applyFilters);
     // Taxonomy dropdowns - auto-apply on change
     ['filterKingdom','filterPhylum','filterClass','filterOrder','filterFamily'].forEach(id=>{
