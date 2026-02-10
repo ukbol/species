@@ -144,6 +144,16 @@ def get_filter_options(df):
             values = sorted(df[col].dropna().unique().tolist())
             values = [v for v in values if v != '']
             filter_options[col] = values
+    # Extract unique PANTHEON assemblage type codes (comma-separated in data)
+    if 'pantheon_specific_assemblage_type' in df.columns:
+        all_codes = set()
+        for val in df['pantheon_specific_assemblage_type'].dropna():
+            if val:
+                for code in str(val).split(','):
+                    code = code.strip()
+                    if code:
+                        all_codes.add(code)
+        filter_options['pantheon_assemblage'] = sorted(all_codes)
     return filter_options
 
 
@@ -422,10 +432,11 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 <div class="mb-3">
 <label class="form-label fw-bold">Assemblage</label>
 <div class="form-check"><input class="form-check-input assemblage-filter" type="checkbox" value="freshbase" id="assemblageFreshbase"><label class="form-check-label" for="assemblageFreshbase">Freshwater macroinverts</label></div>
+<select id="filterPantheonAssemblage" class="form-select form-select-sm mt-2"><option value="">All PANTHEON assemblages</option></select>
 </div>
 <div class="mb-3">
-<label class="form-label fw-bold">Protection Status</label>
-<div class="form-check"><input class="form-check-input" type="checkbox" id="filterProtected"><label class="form-check-label" for="filterProtected">Show only protected species</label></div>
+<label class="form-label fw-bold">Conservation Designations</label>
+<div class="form-check"><input class="form-check-input" type="checkbox" id="filterProtected"><label class="form-check-label" for="filterProtected">Taxa with conservation designations</label></div>
 </div>
 <div class="d-grid gap-2">
 <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
@@ -569,6 +580,16 @@ function initializeFilters() {
         }
     }
     
+    // Populate PANTHEON assemblage dropdown
+    if (FILTER_OPTIONS.pantheon_assemblage) {
+        const paSelect = document.getElementById('filterPantheonAssemblage');
+        FILTER_OPTIONS.pantheon_assemblage.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            paSelect.appendChild(option);
+        });
+    }
     // Add cascade listeners
     document.getElementById('filterKingdom').addEventListener('change', () => updateCascadingDropdowns('kingdom'));
     document.getElementById('filterPhylum').addEventListener('change', () => updateCascadingDropdowns('phylum'));
@@ -635,6 +656,11 @@ function applyFilters() {
             const hasAssemblage = (filters.assemblages.includes('freshbase') && row.freshbase === 'Y');
             if (!hasAssemblage) return false;
         }
+        if (filters.pantheonAssemblage) {
+            const sat = row.pantheon_specific_assemblage_type || '';
+            const codes = sat.split(',').map(c => c.trim());
+            if (!codes.includes(filters.pantheonAssemblage)) return false;
+        }
         if (filters.protected) {
             const hasAnyProtection = JNCC_COLUMNS.some(col => row[col.original] && row[col.original] !== '');
             if (!hasAnyProtection) return false;
@@ -661,6 +687,7 @@ function collectFilters() {
         statuses:activeStatuses,
         habitats:activeHabitats,
         assemblages:activeAssemblages,
+        pantheonAssemblage:document.getElementById('filterPantheonAssemblage').value,
         protected:document.getElementById('filterProtected').checked
     };
 }
@@ -687,7 +714,8 @@ function updateActiveFiltersDisplay(filters) {
     const assemblageLabels = {'freshbase':'Freshwater macroinverts'};
     const assemblageIds = {'freshbase':'assemblageFreshbase'};
     filters.assemblages.forEach(a => addTag('Assemblage',assemblageLabels[a]||a,`document.getElementById('${assemblageIds[a]}').checked=false;applyFilters()`));
-    if (filters.protected) addTag('Filter','Protected only',"document.getElementById('filterProtected').checked=false;applyFilters()");
+    if (filters.pantheonAssemblage) addTag('PANTHEON',filters.pantheonAssemblage,"document.getElementById('filterPantheonAssemblage').value='';applyFilters()");
+    if (filters.protected) addTag('Filter','Conservation designations',"document.getElementById('filterProtected').checked=false;applyFilters()");
 }
 function updateCharts() {
     const statusCounts = {};
@@ -710,6 +738,7 @@ function updateUrl(filters) {
     if(filters.statuses.length<5)params.set('status',filters.statuses.join(','));
     if(filters.habitats.length>0)params.set('habitat',filters.habitats.join(','));
     if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
+    if(filters.pantheonAssemblage)params.set('pantheon_assemblage',filters.pantheonAssemblage);
     if(filters.protected)params.set('protected','1');
     window.history.replaceState({},'',window.location.pathname+(params.toString()?'?'+params.toString():''));
 }
@@ -738,6 +767,7 @@ function loadFiltersFromUrl() {
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
     if(params.get('habitat')){const habitatIdMap={'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};params.get('habitat').split(',').forEach(h=>{const id=habitatIdMap[h];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
+    if(params.get('pantheon_assemblage'))document.getElementById('filterPantheonAssemblage').value=params.get('pantheon_assemblage');
     if(params.get('protected'))document.getElementById('filterProtected').checked=true;
 
     // Apply default filters if no URL filters present
@@ -779,6 +809,7 @@ $(document).ready(function() {
         document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
         document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
         document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.checked=false);
+        document.getElementById('filterPantheonAssemblage').value='';
         document.getElementById('filterProtected').checked=false;
         applyFilters();
     });
@@ -794,6 +825,7 @@ $(document).ready(function() {
     // Habitat and protection filters - auto-apply on change
     document.querySelectorAll('.habitat-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
     document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
+    document.getElementById('filterPantheonAssemblage').addEventListener('change', applyFilters);
     document.getElementById('filterProtected').addEventListener('change', applyFilters);
     // Taxonomy dropdowns - auto-apply on change
     ['filterKingdom','filterPhylum','filterClass','filterOrder','filterFamily'].forEach(id=>{
