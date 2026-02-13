@@ -902,7 +902,12 @@ def main():
         print(f"  Status breakdown: {stats['status_counts']}")
         
         filter_options = get_filter_options(df)
-        
+
+        # Check if gb_records column has any non-zero values
+        has_gb_records = ('gb_records' in df.columns and
+                         pd.to_numeric(df['gb_records'], errors='coerce').fillna(0).astype(int).gt(0).any())
+        print(f"  UK records column active: {has_gb_records}")
+
         # Save compressed JSON data
         json_path = output_dir / 'data' / f'{gene_name}.json.gz'
         row_count = prepare_data_json(df, jncc_columns, json_path)
