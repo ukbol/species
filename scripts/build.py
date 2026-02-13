@@ -674,6 +674,8 @@ function applyFilters() {
             const hasAnyProtection = JNCC_COLUMNS.some(col => row[col.original] && row[col.original] !== '');
             if (!hasAnyProtection) return false;
         }
+        if (filters.gbRecords === 'with' && !(Number(row.gb_records) > 0)) return false;
+        if (filters.gbRecords === 'without' && Number(row.gb_records) > 0) return false;
         return true;
     });
     table.clear().rows.add(filteredData).draw();
@@ -697,7 +699,8 @@ function collectFilters() {
         habitats:activeHabitats,
         assemblages:activeAssemblages,
         pantheonAssemblage:document.getElementById('filterPantheonAssemblage').value,
-        protected:document.getElementById('filterProtected').checked
+        protected:document.getElementById('filterProtected').checked,
+        gbRecords:document.getElementById('filterGbRecords')?document.getElementById('filterGbRecords').value:''
     };
 }
 function updateActiveFiltersDisplay(filters) {
@@ -725,6 +728,7 @@ function updateActiveFiltersDisplay(filters) {
     filters.assemblages.forEach(a => addTag('Assemblage',assemblageLabels[a]||a,`document.getElementById('${assemblageIds[a]}').checked=false;applyFilters()`));
     if (filters.pantheonAssemblage) addTag('PANTHEON',filters.pantheonAssemblage,"document.getElementById('filterPantheonAssemblage').value='';applyFilters()");
     if (filters.protected) addTag('Filter','Conservation designations',"document.getElementById('filterProtected').checked=false;applyFilters()");
+    if (filters.gbRecords) {const label=filters.gbRecords==='with'?'With UK records':'Without UK records';addTag('UK Records',label,"document.getElementById('filterGbRecords').value='';applyFilters()");}
 }
 function updateCharts() {
     const statusCounts = {};
@@ -749,6 +753,7 @@ function updateUrl(filters) {
     if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
     if(filters.pantheonAssemblage)params.set('pantheon_assemblage',filters.pantheonAssemblage);
     if(filters.protected)params.set('protected','1');
+    if(filters.gbRecords)params.set('gb_records',filters.gbRecords);
     window.history.replaceState({},'',window.location.pathname+(params.toString()?'?'+params.toString():''));
 }
 function loadFiltersFromUrl() {
@@ -778,6 +783,7 @@ function loadFiltersFromUrl() {
     if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('pantheon_assemblage'))document.getElementById('filterPantheonAssemblage').value=params.get('pantheon_assemblage');
     if(params.get('protected'))document.getElementById('filterProtected').checked=true;
+    if(params.get('gb_records')){const el=document.getElementById('filterGbRecords');if(el)el.value=params.get('gb_records');}
 
     // Apply default filters if no URL filters present
     if(!hasUrlFilters && Object.keys(DEFAULT_FILTERS).length > 0) {
@@ -836,6 +842,7 @@ $(document).ready(function() {
     document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
     document.getElementById('filterPantheonAssemblage').addEventListener('change', applyFilters);
     document.getElementById('filterProtected').addEventListener('change', applyFilters);
+    if (document.getElementById('filterGbRecords')) document.getElementById('filterGbRecords').addEventListener('change', applyFilters);
     // Taxonomy dropdowns - auto-apply on change
     ['filterKingdom','filterPhylum','filterClass','filterOrder','filterFamily'].forEach(id=>{
         document.getElementById(id).addEventListener('change', applyFilters);
