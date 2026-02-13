@@ -371,8 +371,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .navbar{background:linear-gradient(135deg,#1a365d 0%,#2d5a87 100%)!important;}
 .stat-card,.filter-panel,.chart-container,.table-container{background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);}
 .chart-container,.table-container,.filter-panel{margin-bottom:1.5rem;}
+.chart-container{overflow:hidden;}
 .filter-panel h5{margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e9ecef;}
-.status-badge{display:inline-block;padding:.25em .6em;font-size:.8rem;font-weight:600;border-radius:4px;color:#fff;}
+.status-badge{display:inline-block;padding:.15em .45em;font-size:.7rem;font-weight:600;border-radius:4px;color:#fff;white-space:nowrap;}
 .status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
 .filter-tag{display:inline-flex;align-items:center;gap:.25rem;background:#e7f1ff;color:#0d6efd;padding:.25rem .75rem;border-radius:20px;font-size:.85rem;margin:.25rem;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
@@ -383,10 +384,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .url-indicator{position:fixed;bottom:20px;right:20px;background:#fff;padding:.75rem 1rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:.85rem;z-index:1000;display:none;}
 .url-indicator.show{display:block;}
 table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
+/* Compact table styling */
+table.dataTable{font-size:.8rem;}
+table.dataTable th,table.dataTable td{padding:.35rem .4rem;white-space:nowrap;}
+table.dataTable th{font-size:.75rem;}
 /* Truncated cells for long text */
-.truncate-cell{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+.truncate-cell{max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
 /* Data link icons */
-.data-link a{text-decoration:none;margin-right:0.25rem;font-size:1rem;}
+.data-link a{text-decoration:none;margin-right:0.25rem;font-size:.85rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
@@ -455,7 +460,7 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 </div></div>
 <div class="col-lg-9">
 <div class="row mb-4">
-<div class="col-md-4"><div class="chart-container"><h6 class="text-muted text-uppercase small mb-2">Coverage Overview</h6><div id="pieChart" style="height:280px;"></div></div></div>
+<div class="col-md-4"><div class="chart-container"><h6 class="text-muted text-uppercase small mb-2">Coverage Overview</h6><div id="pieChart" style="height:320px;"></div></div></div>
 <div class="col-md-8"><div class="chart-container"><h6 class="text-muted text-uppercase small mb-2">Gap Analysis by Order (Top 20)</h6><div id="barChart" style="height:280px;"></div></div></div>
 </div>
 <div class="table-container">
@@ -646,7 +651,7 @@ function initializeTable() {
         columns.push({data:'gb_records',title:'UK Records'});
     }
     columns.push({data:null,title:'Data Link',render:dataLinkRender,orderable:false});
-    table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true});
+    table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true,autoWidth:false});
 }
 function applyFilters() {
     const filters = collectFilters();
@@ -734,7 +739,7 @@ function updateCharts() {
     const statusCounts = {};
     filteredData.forEach(row => {const status = row.species_status || 'Unknown';statusCounts[status] = (statusCounts[status] || 0) + 1;});
     const pieLabels = Object.keys(statusCounts).map(s => STATUS_LABELS[s] || s);
-    Plotly.newPlot('pieChart',[{values:Object.values(statusCounts),labels:pieLabels,type:'pie',hole:0.4,marker:{colors:Object.keys(statusCounts).map(s=>STATUS_COLORS[s]||'#6c757d')},textinfo:'label+percent',textposition:'outside'}],{margin:{t:20,b:20,l:20,r:20},showlegend:false},{responsive:true});
+    Plotly.newPlot('pieChart',[{values:Object.values(statusCounts),labels:pieLabels,type:'pie',hole:0.4,marker:{colors:Object.keys(statusCounts).map(s=>STATUS_COLORS[s]||'#6c757d')},textinfo:'label+percent',textposition:'outside',automargin:true,textfont:{size:11}}],{margin:{t:40,b:40,l:40,r:40},showlegend:false},{responsive:true});
     const orderData = {};
     filteredData.forEach(row => {const order = row.order || 'Unknown';const status = row.species_status || 'Unknown';if(!orderData[order])orderData[order]={};orderData[order][status]=(orderData[order][status]||0)+1;});
     const sortedOrders = Object.entries(orderData).map(([order,counts])=>({order,total:Object.values(counts).reduce((a,b)=>a+b,0),counts})).sort((a,b)=>b.total-a.total).slice(0,20);
