@@ -460,8 +460,8 @@ table.dataTable th{font-size:.75rem;}
 </div></div>
 <div class="col-lg-9">
 <div class="row mb-4">
-<div class="col-md-4"><div class="chart-container"><h6 class="text-muted text-uppercase small mb-2">Coverage Overview</h6><div id="pieChart" style="height:320px;"></div></div></div>
-<div class="col-md-8"><div class="chart-container"><h6 class="text-muted text-uppercase small mb-2">Gap Analysis by Order (Top 20)</h6><div id="barChart" style="height:280px;"></div></div></div>
+<div class="col-md-4"><div class="chart-container h-100"><h6 class="text-muted text-uppercase small mb-2">Coverage Overview</h6><div id="pieChart" style="height:280px;"></div></div></div>
+<div class="col-md-8"><div class="chart-container h-100"><h6 class="text-muted text-uppercase small mb-2">Gap Analysis by Order (Top 20)</h6><div id="barChart" style="height:280px;"></div></div></div>
 </div>
 <div class="table-container">
 <div class="d-flex justify-content-between align-items-center mb-3">
