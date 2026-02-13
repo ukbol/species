@@ -476,6 +476,7 @@ const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
 const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
 const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
+const HAS_GB_RECORDS = ''' + json.dumps(has_gb_records) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
 const TSV_FILE = 'data/''' + gene_name + '''.tsv';
 let DATA = [], filteredData = [], table = null;
@@ -636,8 +637,11 @@ function initializeTable() {
         {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
         {data:'bags_grade',title:'Grade'},
         {data:'number_records',title:'Records'},
-        {data:null,title:'Data Link',render:dataLinkRender,orderable:false}
     ];
+    if (HAS_GB_RECORDS) {
+        columns.push({data:'gb_records',title:'UK Records'});
+    }
+    columns.push({data:null,title:'Data Link',render:dataLinkRender,orderable:false});
     table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true});
 }
 function applyFilters() {
