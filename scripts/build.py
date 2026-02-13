@@ -353,7 +353,7 @@ def get_default_filter_for_gene(gene_name):
     return {}
 
 
-def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date):
+def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False):
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
     default_filters = get_default_filter_for_gene(gene_name)
 
@@ -923,7 +923,7 @@ def main():
             print(f"  - TSV already in output directory")
         
         # Generate HTML
-        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date)
+        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records)
         
         genes_data.append({
             'filename': f"{gene_name}.html",
