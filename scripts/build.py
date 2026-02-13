@@ -60,6 +60,7 @@ DISPLAY_COLUMNS = [
     ('species_status', 'Status'),
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
+    ('gb_records', 'UK Records'),
     ('data_link', 'Data Link'),
 ]
 
