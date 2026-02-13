@@ -439,7 +439,11 @@ table.dataTable tbody tr:hover{background-color:#f8f9fa!important;}
 <label class="form-label fw-bold">Conservation Designations</label>
 <div class="form-check"><input class="form-check-input" type="checkbox" id="filterProtected"><label class="form-check-label" for="filterProtected">Taxa with conservation designations</label></div>
 </div>
-<div class="d-grid gap-2">
+''' + ('''<div class="mb-3">
+<label class="form-label fw-bold">UK Records</label>
+<select id="filterGbRecords" class="form-select form-select-sm"><option value="">All species</option><option value="with">With UK records</option><option value="without">Without UK records</option></select>
+</div>
+''' if has_gb_records else '') + '''<div class="d-grid gap-2">
 <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
 <button id="resetFilters" class="btn btn-outline-secondary">Reset All</button>
 <button id="shareUrl" class="btn btn-outline-info">Share Filtered View</button>
