@@ -127,8 +127,8 @@ const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE
 const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
 const DEFAULT_FILTERS = {"kingdom": "Animalia"};
 const HAS_GB_RECORDS = true;
-const DATA_FILE = 'data/2026-02-10_bold_coi_gap_analysis.json.gz';
-const TSV_FILE = 'data/2026-02-10_bold_coi_gap_analysis.tsv';
+const DATA_FILE = 'data/bold_coi.json.gz';
+const TSV_FILE = 'data/bold_coi.tsv';
 let DATA = [], filteredData = [], table = null;
 
 async function loadData() {

@@ -897,7 +897,9 @@ def main():
     
     for tsv_path in sorted(tsv_files):
         filename = tsv_path.name
-        gene_name = tsv_path.stem
+        # Strip date prefix and _gap_analysis suffix for stable output filenames
+        gene_name = re.sub(r'^\d{4}-\d{2}-\d{2}_', '', tsv_path.stem)
+        gene_name = re.sub(r'_gap_analysis$', '', gene_name)
         display_name = get_gene_name(str(tsv_path))
         
         print(f"\nProcessing: {filename}")
