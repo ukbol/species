@@ -29,13 +29,22 @@ STATUS_COLORS = {
     'BLUE': '#0d6efd', 'BLACK': '#343a40',
 }
 
-# Shortened status labels for display
+# Shortened status labels for display (gene datasets)
 STATUS_LABELS = {
     'GREEN': 'OK - Valid',
     'BLUE': 'OK - Synonym',
     'AMBER': 'OK - Valid + Synonym',
     'RED': 'ID Conflict',
     'BLACK': 'Missing',
+}
+
+# Status labels for DToL genome datasets
+DTOL_STATUS_LABELS = {
+    'GREEN': 'Annotation Complete',
+    'BLUE': 'Assemblies - Submitted',
+    'AMBER': 'Raw Data - Submitted',
+    'RED': 'Submitted to BioSamples',
+    'BLACK': 'Not in DToL',
 }
 
 # Default taxonomy filters for specific gene regions
