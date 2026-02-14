@@ -921,11 +921,17 @@ def main():
             df = pd.read_csv(tsv_path, sep='\t', encoding='latin-1', low_memory=False)
         
         df = df.fillna('')
-        
-        # Keep reference for cross-gene stats
-        all_dataframes.append(df)
-        
+
+        # Detect dataset type
+        is_dtol = 'dtol_status' in df.columns
+        status_labels = DTOL_STATUS_LABELS if is_dtol else STATUS_LABELS
+
+        # Keep reference for cross-gene stats (exclude DToL - different coverage concept)
+        if not is_dtol:
+            all_dataframes.append(df)
+
         print(f"  Rows: {len(df):,}")
+        print(f"  Dataset type: {'DToL genome' if is_dtol else 'gene'}")
         
         jncc_columns = get_jncc_columns(df)
         print(f"  JNCC columns with data: {len(jncc_columns)}")
