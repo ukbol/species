@@ -60,6 +60,7 @@ GENE_DEFAULT_FILTERS = {
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
 
 # Columns to display in the browser table (in order)
+# Columns not present in the dataframe will be skipped automatically
 DISPLAY_COLUMNS = [
     ('taxon_name', 'Species'),
     ('synonyms', 'Synonyms'),
@@ -67,6 +68,7 @@ DISPLAY_COLUMNS = [
     ('order', 'Order'),
     ('family', 'Family'),
     ('species_status', 'Status'),
+    ('dtol_status', 'DToL Status'),
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
     ('gb_records', 'UK Records'),
