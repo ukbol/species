@@ -652,6 +652,17 @@ function initializeTable() {
                 return '<span class="data-link">' + links + '</span>';
             }
         }
+        // Check for DToL INSDC project IDs (PRJ* pattern)
+        if (row.dtol_insdc_ids && row.dtol_insdc_ids.trim()) {
+            const ids = row.dtol_insdc_ids.split(';').map(id => id.trim()).filter(id => id);
+            if (ids.length > 0) {
+                const links = ids.map(id => {
+                    const url = 'https://www.ebi.ac.uk/ena/browser/view/' + id;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
         return '—';
     };
     const columns = [
