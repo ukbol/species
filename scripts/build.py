@@ -364,9 +364,18 @@ def get_default_filter_for_gene(gene_name):
     return {}
 
 
-def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False):
+def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_labels=None):
+    if status_labels is None:
+        status_labels = STATUS_LABELS
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
     default_filters = get_default_filter_for_gene(gene_name)
+
+    # Build status filter buttons from labels
+    btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
+    status_buttons = '\n'.join([
+        f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
+        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK']
+    ])
 
     html = '''<!DOCTYPE html>
 <html lang="en">
@@ -434,11 +443,7 @@ table.dataTable th{font-size:.75rem;}
 <div class="mb-3">
 <label class="form-label fw-bold">Coverage Status</label>
 <div class="d-flex flex-wrap gap-1">
-<button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">OK - Valid</button>
-<button class="btn btn-sm btn-outline-primary status-btn active" data-status="BLUE">OK - Synonym</button>
-<button class="btn btn-sm btn-outline-warning status-btn active" data-status="AMBER">OK - V+S</button>
-<button class="btn btn-sm btn-outline-danger status-btn active" data-status="RED">ID Conflict</button>
-<button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">Missing</button>
+''' + status_buttons + '''
 </div></div>
 <div class="mb-3">
 <label class="form-label fw-bold">Habitat</label>
@@ -495,7 +500,7 @@ table.dataTable th{font-size:.75rem;}
 const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
-const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
+const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
 const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
 const HAS_GB_RECORDS = ''' + json.dumps(has_gb_records) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
@@ -963,7 +968,7 @@ def main():
             print(f"  - TSV already in output directory")
         
         # Generate HTML
-        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records)
+        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_labels)
         
         genes_data.append({
             'filename': f"{gene_name}.html",
