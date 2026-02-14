@@ -29,12 +29,21 @@ STATUS_COLORS = {
     'BLUE': '#0d6efd', 'BLACK': '#343a40',
 }
 
-# Shortened status labels for display
+# Shortened status labels for display (gene datasets)
 STATUS_LABELS = {
     'GREEN': 'OK - Valid',
     'BLUE': 'OK - Synonym',
     'AMBER': 'OK - Valid + Synonym',
     'RED': 'ID Conflict',
+    'BLACK': 'Missing',
+}
+
+# Status labels for DToL genome datasets
+DTOL_STATUS_LABELS = {
+    'GREEN': 'Completed',
+    'BLUE': 'Assembled',
+    'AMBER': 'Sequenced',
+    'RED': 'Sampled',
     'BLACK': 'Missing',
 }
 
@@ -51,6 +60,7 @@ GENE_DEFAULT_FILTERS = {
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
 
 # Columns to display in the browser table (in order)
+# Columns not present in the dataframe will be skipped automatically
 DISPLAY_COLUMNS = [
     ('taxon_name', 'Species'),
     ('synonyms', 'Synonyms'),
@@ -288,7 +298,8 @@ footer a{{color:rgba(255,255,255,.9);}}
                 bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
         bar_html = ''.join(bar_segments)
         
-        badges = ''.join([f'<small class="status-badge status-{s}">{STATUS_LABELS.get(s, s)}: {status_counts.get(s, 0):,}</small>'
+        gene_labels = gene.get('status_labels', STATUS_LABELS)
+        badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
                          for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
         
         html_parts.append(f'''<div class="col-md-6 col-lg-4">
@@ -353,9 +364,31 @@ def get_default_filter_for_gene(gene_name):
     return {}
 
 
-def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False):
+def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_labels=None):
+    if status_labels is None:
+        status_labels = STATUS_LABELS
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
     default_filters = get_default_filter_for_gene(gene_name)
+
+    # Build status filter buttons from labels
+    btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
+    status_buttons = '\n'.join([
+        f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
+        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK']
+    ])
+
+    # Build table column definitions based on columns present in the dataframe
+    # Special renderers: 'truncate' for long text, 'status' for colored badges, 'data_link' for external links
+    COLUMN_RENDERERS = {'synonyms': 'truncate', 'other_names': 'truncate', 'species_status': 'status'}
+    table_columns = []
+    for col_name, col_title in DISPLAY_COLUMNS:
+        if col_name == 'data_link':
+            table_columns.append({'data': None, 'title': 'Data Link', 'render': 'data_link', 'orderable': False})
+        elif col_name in df.columns:
+            col_def = {'data': col_name, 'title': col_title}
+            if col_name in COLUMN_RENDERERS:
+                col_def['render'] = COLUMN_RENDERERS[col_name]
+            table_columns.append(col_def)
 
     html = '''<!DOCTYPE html>
 <html lang="en">
@@ -423,11 +456,7 @@ table.dataTable th{font-size:.75rem;}
 <div class="mb-3">
 <label class="form-label fw-bold">Coverage Status</label>
 <div class="d-flex flex-wrap gap-1">
-<button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">OK - Valid</button>
-<button class="btn btn-sm btn-outline-primary status-btn active" data-status="BLUE">OK - Synonym</button>
-<button class="btn btn-sm btn-outline-warning status-btn active" data-status="AMBER">OK - V+S</button>
-<button class="btn btn-sm btn-outline-danger status-btn active" data-status="RED">ID Conflict</button>
-<button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">Missing</button>
+''' + status_buttons + '''
 </div></div>
 <div class="mb-3">
 <label class="form-label fw-bold">Habitat</label>
@@ -484,9 +513,9 @@ table.dataTable th{font-size:.75rem;}
 const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
-const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
+const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
 const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
-const HAS_GB_RECORDS = ''' + json.dumps(has_gb_records) + ''';
+const TABLE_COLUMNS = ''' + json.dumps(table_columns) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
 const TSV_FILE = 'data/''' + gene_name + '''.tsv';
 let DATA = [], filteredData = [], table = null;
@@ -636,22 +665,30 @@ function initializeTable() {
                 return '<span class="data-link">' + links + '</span>';
             }
         }
+        // Check for DToL INSDC project IDs (PRJ* pattern)
+        if (row.dtol_insdc_ids && row.dtol_insdc_ids.trim()) {
+            const ids = row.dtol_insdc_ids.split(';').map(id => id.trim()).filter(id => id);
+            if (ids.length > 0) {
+                const links = ids.map(id => {
+                    const url = 'https://www.ebi.ac.uk/ena/browser/view/' + id;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
         return '—';
     };
-    const columns = [
-        {data:'taxon_name',title:'Species'},
-        {data:'synonyms',title:'Synonyms',render:truncateRender},
-        {data:'other_names',title:'Other names',render:truncateRender},
-        {data:'order',title:'Order'},
-        {data:'family',title:'Family'},
-        {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
-        {data:'bags_grade',title:'Grade'},
-        {data:'number_records',title:'Records'},
-    ];
-    if (HAS_GB_RECORDS) {
-        columns.push({data:'gb_records',title:'UK Records'});
-    }
-    columns.push({data:null,title:'Data Link',render:dataLinkRender,orderable:false});
+    const RENDERERS = {
+        'truncate': truncateRender,
+        'status': (data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:'',
+        'data_link': dataLinkRender
+    };
+    const columns = TABLE_COLUMNS.map(col => {
+        const def = {data:col.data,title:col.title};
+        if (col.render && RENDERERS[col.render]) def.render = RENDERERS[col.render];
+        if (col.orderable === false) def.orderable = false;
+        return def;
+    });
     table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true,autoWidth:false});
 }
 function applyFilters() {
@@ -912,11 +949,17 @@ def main():
             df = pd.read_csv(tsv_path, sep='\t', encoding='latin-1', low_memory=False)
         
         df = df.fillna('')
-        
-        # Keep reference for cross-gene stats
-        all_dataframes.append(df)
-        
+
+        # Detect dataset type
+        is_dtol = 'dtol_status' in df.columns
+        status_labels = DTOL_STATUS_LABELS if is_dtol else STATUS_LABELS
+
+        # Keep reference for cross-gene stats (exclude DToL - different coverage concept)
+        if not is_dtol:
+            all_dataframes.append(df)
+
         print(f"  Rows: {len(df):,}")
+        print(f"  Dataset type: {'DToL genome' if is_dtol else 'gene'}")
         
         jncc_columns = get_jncc_columns(df)
         print(f"  JNCC columns with data: {len(jncc_columns)}")
@@ -946,12 +989,13 @@ def main():
             print(f"  - TSV already in output directory")
         
         # Generate HTML
-        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records)
+        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_labels)
         
         genes_data.append({
             'filename': f"{gene_name}.html",
             'display_name': display_name,
-            'stats': stats
+            'stats': stats,
+            'status_labels': status_labels,
         })
     
     # Zenodo links
