@@ -299,7 +299,8 @@ footer a{{color:rgba(255,255,255,.9);}}
                 bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
         bar_html = ''.join(bar_segments)
         
-        badges = ''.join([f'<small class="status-badge status-{s}">{STATUS_LABELS.get(s, s)}: {status_counts.get(s, 0):,}</small>'
+        gene_labels = gene.get('status_labels', STATUS_LABELS)
+        badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
                          for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
         
         html_parts.append(f'''<div class="col-md-6 col-lg-4">
@@ -994,7 +995,8 @@ def main():
         genes_data.append({
             'filename': f"{gene_name}.html",
             'display_name': display_name,
-            'stats': stats
+            'stats': stats,
+            'status_labels': status_labels,
         })
     
     # Zenodo links
