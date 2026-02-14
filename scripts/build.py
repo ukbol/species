@@ -40,11 +40,11 @@ STATUS_LABELS = {
 
 # Status labels for DToL genome datasets
 DTOL_STATUS_LABELS = {
-    'GREEN': 'Annotation Complete',
-    'BLUE': 'Assemblies - Submitted',
-    'AMBER': 'Raw Data - Submitted',
-    'RED': 'Submitted to BioSamples',
-    'BLACK': 'Not in DToL',
+    'GREEN': 'Completed',
+    'BLUE': 'Assembled',
+    'AMBER': 'Sequenced',
+    'RED': 'Sampled',
+    'BLACK': 'Missing',
 }
 
 # Default taxonomy filters for specific gene regions
@@ -68,7 +68,6 @@ DISPLAY_COLUMNS = [
     ('order', 'Order'),
     ('family', 'Family'),
     ('species_status', 'Status'),
-    ('dtol_status', 'DToL Status'),
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
     ('gb_records', 'UK Records'),
