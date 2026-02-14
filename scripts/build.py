@@ -395,6 +395,7 @@ table.dataTable th{font-size:.75rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+@media(hover:none){.status-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
 @media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
@@ -897,7 +898,9 @@ def main():
     
     for tsv_path in sorted(tsv_files):
         filename = tsv_path.name
-        gene_name = tsv_path.stem
+        # Strip date prefix and _gap_analysis suffix for stable output filenames
+        gene_name = re.sub(r'^\d{4}-\d{2}-\d{2}_', '', tsv_path.stem)
+        gene_name = re.sub(r'_gap_analysis$', '', gene_name)
         display_name = get_gene_name(str(tsv_path))
         
         print(f"\nProcessing: {filename}")

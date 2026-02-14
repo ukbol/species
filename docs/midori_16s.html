@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COI (BOLD) - UKBOL Gap Analysis</title>
+<title>16S (MIDORI) - UKBOL Gap Analysis</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -36,6 +36,7 @@ table.dataTable th{font-size:.75rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+@media(hover:none){.status-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
 @media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
@@ -44,7 +45,7 @@ table.dataTable th{font-size:.75rem;}
 <nav class="navbar navbar-dark mb-4">
 <div class="container-fluid">
 <a class="navbar-brand" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Back to Portal</a>
-<span class="navbar-text fw-bold">COI (BOLD)</span>
+<span class="navbar-text fw-bold">16S (MIDORI)</span>
 <span class="navbar-text text-light opacity-75">79,085 species | Updated 2026-02-14</span>
 </div></nav>
 <div class="container-fluid px-4">
@@ -85,10 +86,6 @@ table.dataTable th{font-size:.75rem;}
 <label class="form-label fw-bold">Conservation Designations</label>
 <div class="form-check"><input class="form-check-input" type="checkbox" id="filterProtected"><label class="form-check-label" for="filterProtected">Taxa with conservation designations</label></div>
 </div>
-<div class="mb-3">
-<label class="form-label fw-bold">UK Records</label>
-<select id="filterGbRecords" class="form-select form-select-sm"><option value="">All species</option><option value="with">With UK records</option><option value="without">Without UK records</option></select>
-</div>
 <div class="d-grid gap-2">
 <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
 <button id="resetFilters" class="btn btn-outline-secondary">Reset All</button>
@@ -125,10 +122,10 @@ const FILTER_OPTIONS = {"kingdom": ["Animalia", "Chromista", "Fungi", "Plantae"]
 const JNCC_COLUMNS = [{"original": "pantheon_sqs", "display": "Pantheon Sqs"}, {"original": "pantheon_conservation_status", "display": "Pantheon Conservation Status"}, {"original": "pantheon_current_conservation_status", "display": "Pantheon Current Conservation Status"}, {"original": "pantheon_designation_summary", "display": "Pantheon Designation Summary"}, {"original": "pantheon_larval_feeding_guild", "display": "Pantheon Larval Feeding Guild"}, {"original": "pantheon_adult_feeding_guild", "display": "Pantheon Adult Feeding Guild"}, {"original": "pantheon_broad_biotope", "display": "Pantheon Broad Biotope"}, {"original": "pantheon_habitat", "display": "Pantheon Habitat"}, {"original": "pantheon_resources", "display": "Pantheon Resources"}, {"original": "pantheon_specific_assemblage_type", "display": "Pantheon Specific Assemblage Type"}, {"original": "pantheon_habitat_score", "display": "Pantheon Habitat Score"}, {"original": "pantheon_associations", "display": "Pantheon Associations"}, {"original": "jncc_a: bern convention", "display": "Bern Convention"}, {"original": "jncc_c: birds directive", "display": "Birds Directive"}, {"original": "jncc_c1: convention on migratory species", "display": "Jncc C1: Convention On Migratory Species"}, {"original": "jncc_c2: ospar", "display": "Jncc C2: Ospar"}, {"original": "jncc_d: habitats directive", "display": "Habitats Directive"}, {"original": "jncc_e: ec cites", "display": "Ec Cites"}, {"original": "jncc_f: global red list status", "display": "Global Red List Status"}, {"original": "jncc_fa: red listing based on pre 1994 iucn guidelines", "display": "Red Listing Based On Pre 1994 Iucn Guidelines"}, {"original": "jncc_fb: red listing based on 1994 iucn guidelines", "display": "Red Listing Based On 1994 Iucn Guidelines"}, {"original": "jncc_fc: red listing based on 2001 iucn guidelines", "display": "Red Listing Based On 2001 Iucn Guidelines"}, {"original": "jncc_fd: red data categories  - birds (not based on iucn criteria)", "display": "Red Data Categories  - Birds (Not Based On Iucn Criteria)"}, {"original": "jncc_fe: red data categories - spiders (not based on iucn criteria)", "display": "Red Data Categories - Spiders (Not Based On Iucn Criteria)"}, {"original": "jncc_ga: rare and scarce species", "display": "Rare And Scarce Species"}, {"original": "jncc_gb: rare and scarce species (not based on iucn criteria)", "display": "Rare And Scarce Species (Not Based On Iucn Criteria)"}, {"original": "jncc_ha: biodiversity action plan uk list of priority species", "display": "Biodiversity Action Plan Uk List Of Priority Species"}, {"original": "jncc_hb: biodiversity lists - england", "display": "Biodiversity Lists - England"}, {"original": "jncc_hc: biodiversity lists - scotland", "display": "Biodiversity Lists - Scotland"}, {"original": "jncc_hd: biodiversity lists - wales", "display": "Biodiversity Lists - Wales"}, {"original": "jncc_he: biodiversity lists - northern ireland", "display": "Biodiversity Lists - Northern Ireland"}, {"original": "jncc_i: wildlife and countryside act 1981", "display": "Wildlife And Countryside Act 1981"}, {"original": "jncc_j: the wildlife (northern ireland) order 1985", "display": "The Wildlife (Northern Ireland) Order 1985"}, {"original": "jncc_k: the conservation of habitats and species regulations 2010", "display": "The Conservation Of Habitats And Species Regulations 2010"}, {"original": "jncc_l: the conservation (nature habitats, etc_) regulations (ni) 199", "display": "The Conservation (Nature Habitats, Etc ) Regulations (Ni) 199"}, {"original": "jncc_m: protection of badgers act", "display": "Protection Of Badgers Act"}];
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
 const STATUS_LABELS = {"GREEN":"OK - Valid","BLUE":"OK - Synonym","AMBER":"OK - Valid + Synonym","RED":"ID Conflict","BLACK":"Missing"};
-const DEFAULT_FILTERS = {"kingdom": "Animalia"};
-const HAS_GB_RECORDS = true;
-const DATA_FILE = 'data/2026-02-10_bold_coi_gap_analysis.json.gz';
-const TSV_FILE = 'data/2026-02-10_bold_coi_gap_analysis.tsv';
+const DEFAULT_FILTERS = {};
+const HAS_GB_RECORDS = false;
+const DATA_FILE = 'data/midori_16s.json.gz';
+const TSV_FILE = 'data/midori_16s.tsv';
 let DATA = [], filteredData = [], table = null;
 
 async function loadData() {
