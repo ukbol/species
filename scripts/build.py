@@ -377,6 +377,19 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
         for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK']
     ])
 
+    # Build table column definitions based on columns present in the dataframe
+    # Special renderers: 'truncate' for long text, 'status' for colored badges, 'data_link' for external links
+    COLUMN_RENDERERS = {'synonyms': 'truncate', 'other_names': 'truncate', 'species_status': 'status'}
+    table_columns = []
+    for col_name, col_title in DISPLAY_COLUMNS:
+        if col_name == 'data_link':
+            table_columns.append({'data': None, 'title': 'Data Link', 'render': 'data_link', 'orderable': False})
+        elif col_name in df.columns:
+            col_def = {'data': col_name, 'title': col_title}
+            if col_name in COLUMN_RENDERERS:
+                col_def['render'] = COLUMN_RENDERERS[col_name]
+            table_columns.append(col_def)
+
     html = '''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -502,7 +515,7 @@ const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
 const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
 const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
-const HAS_GB_RECORDS = ''' + json.dumps(has_gb_records) + ''';
+const TABLE_COLUMNS = ''' + json.dumps(table_columns) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
 const TSV_FILE = 'data/''' + gene_name + '''.tsv';
 let DATA = [], filteredData = [], table = null;
@@ -665,20 +678,17 @@ function initializeTable() {
         }
         return '—';
     };
-    const columns = [
-        {data:'taxon_name',title:'Species'},
-        {data:'synonyms',title:'Synonyms',render:truncateRender},
-        {data:'other_names',title:'Other names',render:truncateRender},
-        {data:'order',title:'Order'},
-        {data:'family',title:'Family'},
-        {data:'species_status',title:'Status',render:(data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:''},
-        {data:'bags_grade',title:'Grade'},
-        {data:'number_records',title:'Records'},
-    ];
-    if (HAS_GB_RECORDS) {
-        columns.push({data:'gb_records',title:'UK Records'});
-    }
-    columns.push({data:null,title:'Data Link',render:dataLinkRender,orderable:false});
+    const RENDERERS = {
+        'truncate': truncateRender,
+        'status': (data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:'',
+        'data_link': dataLinkRender
+    };
+    const columns = TABLE_COLUMNS.map(col => {
+        const def = {data:col.data,title:col.title};
+        if (col.render && RENDERERS[col.render]) def.render = RENDERERS[col.render];
+        if (col.orderable === false) def.orderable = false;
+        return def;
+    });
     table = $('#dataTable').DataTable({data:filteredData,columns:columns,pageLength:25,order:[[0,'asc']],dom:'<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',deferRender:true,autoWidth:false});
 }
 function applyFilters() {
