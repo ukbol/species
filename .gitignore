@@ -1,6 +1,3 @@
-# Data files - keep TSVs in private repo only
-data/*.tsv
-
 # Example files
 *.example
 
