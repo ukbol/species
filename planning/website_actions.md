@@ -495,3 +495,213 @@ title: Publications
 - **Bootstrap 5.3.3** via CDN (already used by portal)
 - **Logo files** (colour and white versions)
 - **Page content** in text files (to be pasted into Markdown templates)
+
+---
+
+## Review: Critical Analysis
+
+_Review conducted 2026-02-15 against the current codebase._
+
+### Assessment Summary
+
+The plan is well-structured and covers the core architecture correctly. The hybrid Jekyll + standalone HTML approach is sound — portal HTML files without front matter will pass through the Jekyll build untouched, preserving all interactive functionality. The design specification, component templates, and Jekyll configuration are all production-ready.
+
+However, there are several issues ranging from critical (will break things) to moderate (should be addressed) that need resolution before implementation begins.
+
+---
+
+### CRITICAL Issues
+
+#### 1. Old URL breakage — no redirect strategy
+
+**Problem:** The portal currently serves at `ukbol.github.io/species/` (where `/species/` is the repo name path). When the custom domain `ukbol.org` is configured, GitHub Pages redirects `ukbol.github.io/species/*` to `ukbol.org/*` — stripping the repo name prefix. But after migration, portal pages live at `ukbol.org/species/` (a real subdirectory). This means:
+
+- Old link: `ukbol.github.io/species/bold_coi.html` → redirects to → `ukbol.org/bold_coi.html` → **404**
+- Correct new link: `ukbol.org/species/bold_coi.html`
+
+Any bookmarks, shared URLs (including filter-state URLs like `?kingdom=Animalia&status=GREEN`), or external links to the portal will break.
+
+**Fix:** Add a new Phase between Phases 3 and 4:
+
+- Create redirect HTML files at the root of `docs/` for each portal page. These catch traffic that lands at `ukbol.org/bold_coi.html` and redirect to `ukbol.org/species/bold_coi.html`. Use the `jekyll-redirect-from` plugin (supported by GitHub Pages) or simple static HTML redirects:
+  ```
+  docs/bold_coi.html      → meta refresh redirect to /species/bold_coi.html
+  docs/midori_12s.html    → meta refresh redirect to /species/midori_12s.html
+  docs/midori_16s.html    → meta refresh redirect to /species/midori_16s.html
+  docs/ncbi_rbcl.html     → meta refresh redirect to /species/ncbi_rbcl.html
+  docs/unite_its.html     → meta refresh redirect to /species/unite_its.html
+  docs/dtol_genome.html   → meta refresh redirect to /species/dtol_genome.html
+  ```
+- These files MUST NOT have Jekyll front matter (to avoid layout wrapping). Example content:
+  ```html
+  <!DOCTYPE html>
+  <html><head>
+  <meta http-equiv="refresh" content="0;url=/species/bold_coi.html">
+  <link rel="canonical" href="https://ukbol.org/species/bold_coi.html">
+  </head><body>
+  <p>Moved to <a href="/species/bold_coi.html">/species/bold_coi.html</a></p>
+  </body></html>
+  ```
+- These redirect files must preserve query string parameters so shared filter URLs continue to work. A small JavaScript snippet may be needed since meta refresh does not forward query strings:
+  ```html
+  <script>
+  window.location.replace('/species/bold_coi.html' + window.location.search + window.location.hash);
+  </script>
+  ```
+
+#### 2. Phase 4 must not be optional — portal navigation is essential
+
+**Problem:** Phase 4 is marked "Optional but recommended". Without it, users who land on the portal (which is likely the majority of traffic) have no way to navigate to the new website pages. The portal pages currently have no link to a parent site at all.
+
+**Fix:** Remove "(Optional but recommended)" from Phase 4. Make it a required phase. At minimum, the portal `index.html` needs a site-wide navbar and footer. The gene pages should at least get a "UKBOL Home" link added to their existing navbar.
+
+#### 3. `_config.yml` exclude list references non-existent paths
+
+**Problem:** The `exclude` list contains `scripts/`, `data/`, `metadata/`, `planning/`, `update.bat`, and `"*.tsv"`. Since GitHub Pages is configured to build from the `/docs` folder, Jekyll's source directory is `/docs`. None of these directories exist inside `/docs` — they're at the repo root. The exclude directives do nothing and are misleading.
+
+**Fix:** Remove the incorrect entries. The only entries that matter are files actually inside `docs/`:
+```yaml
+exclude:
+  - README.md
+  - CNAME
+  - Gemfile
+  - Gemfile.lock
+```
+Note: `README.md` should only be excluded if there's one inside `docs/`. If not, remove it too.
+
+#### 4. Build script update needs more specificity
+
+**Problem:** Step 17 says "Update `scripts/build.py` so that its output paths target `docs/species/`". This is vague. The build script uses `--output` with a default of `docs` (line 910 of `build.py`). Simply changing this default would work, but the plan should be explicit about what changes.
+
+**Fix:** Replace step 17 with:
+- In `scripts/build.py`, change the `--output` default on line 910 from `'docs'` to `'docs/species'`:
+  ```python
+  parser.add_argument('--output', default='docs/species', help='Output directory')
+  ```
+- This single change ensures all generated files (HTML pages, `data/*.json.gz`, `data/*.tsv`) go to `docs/species/` on the next build.
+- Update the build script's navbar HTML template (line 439) to add a "UKBOL Home" link alongside the "Back to Portal" link.
+- Update the build script's index page generation (`generate_index_html`) to include a link back to the main website in the footer/header.
+
+#### 5. `update.bat` path for build script invocation
+
+**Problem:** Step 18 says "Update `update.bat` if it references old paths". The current `update.bat` calls `python scripts\build.py` with no `--output` argument, relying on the default. If the default changes per issue #4 above, `update.bat` will work correctly without changes. However, `update.bat` also does `git add .` which would stage all files including new Jekyll files — this is fine but worth noting.
+
+**Fix:** Confirm explicitly in the plan that `update.bat` requires no changes if the `build.py` default is updated. Consider adding a note that `git add .` in `update.bat` will also stage any Jekyll infrastructure files if they've been modified.
+
+---
+
+### MODERATE Issues
+
+#### 6. Missing `docs/CNAME` in Phase 2 — duplicated in Phase 8 and Future Considerations
+
+**Problem:** The CNAME file appears in three places: the target repo structure (not listed), Phase 8 step 24, and the "Future Considerations" section. The "Future Considerations" section implies it's optional/future when it's actually a required deployment step.
+
+**Fix:**
+- Keep the CNAME creation in Phase 8 (step 24) where it currently is — that's the correct place.
+- Remove the "Custom domain" bullet from "Future Considerations" since it's already covered in Phase 8.
+- Add `CNAME` to the target repo structure diagram.
+
+#### 7. Missing `www.ukbol.org` DNS setup in deployment steps
+
+**Problem:** The `www` subdomain setup is listed under "Future Considerations" but should be part of the DNS configuration in Phase 8. Users will try `www.ukbol.org` and get an error if this isn't set up.
+
+**Fix:** Move the `www.ukbol.org` redirect instruction into Phase 8, step 27. Add: "Also configure a CNAME record for `www.ukbol.org` pointing to `ukbol.github.io`, or set up a redirect from `www.ukbol.org` to `ukbol.org` via your DNS provider."
+
+#### 8. Missing 404 page implementation
+
+**Problem:** `404.md` is listed in the target structure as "(optional)" but given the URL restructuring (and the redirect issue in #1), a custom 404 page becomes important. Users hitting broken links need guidance.
+
+**Fix:** Make `404.md` a required file. Create it in Phase 3 with content that links to both the homepage and the data portal:
+```markdown
+---
+layout: default
+title: Page Not Found
+permalink: /404.html
+---
+<div class="container">
+  <div class="content-wrapper text-center">
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for may have moved.</p>
+    <p><a href="/">Return to Homepage</a> | <a href="/species/">Go to Data Portal</a></p>
+  </div>
+</div>
+```
+
+#### 9. Testing checklist is incomplete
+
+**Problem:** Phase 7 (step 23) lists basic checks but omits portal-specific functionality that could break.
+
+**Fix:** Add these verification items to step 23:
+- Data loads correctly on gene pages (check browser console for fetch errors on `data/*.json.gz`)
+- Filter state URL sharing works (apply filters, copy URL, open in new tab — filters should restore)
+- CSV export and TSV download both work
+- Plotly charts render (pie chart and bar chart)
+- DataTables pagination, search, and sorting work
+- Taxonomy cascading dropdowns work (select Kingdom → Phylum options update)
+- "Back to Portal" links on gene pages work
+- New website nav links from portal pages work (if Phase 4 implemented)
+
+#### 10. Portal nav integration (Phase 4) needs build script alignment
+
+**Problem:** Phase 4 step 14 says to manually add nav HTML to portal pages. But the portal pages are regenerated by `build.py` on every data update. Any manual edits will be overwritten on the next build.
+
+**Fix:** The nav/footer additions for portal pages must be made in `build.py`, not manually in the HTML files. Specifically:
+- Update the `generate_report_html` function to include the site-wide nav bar above the existing portal navbar.
+- Update the `generate_index_html` function to include the site-wide nav bar and footer.
+- Use hardcoded absolute paths (`/`, `/about/`, `/species/`) rather than Liquid template tags since these are standalone HTML files.
+
+Rewrite Phase 4 steps 14-16 to reference build script changes rather than manual edits.
+
+#### 11. Homepage species count will become stale
+
+**Problem:** The homepage template (`index.md`) hardcodes "79,027 UK species" and "6 gene regions". These numbers change when data is updated, but the Markdown file won't be regenerated by the build script.
+
+**Fix:** Either:
+- Accept that this number is manually maintained (low maintenance given infrequent changes), or
+- Have `build.py` generate a Jekyll data file (e.g., `docs/_data/stats.yml`) with current statistics, then reference it in `index.md` as `{{ site.data.stats.total_species }}`. This keeps the count automatically in sync.
+
+---
+
+### MINOR Issues
+
+#### 12. `_sass/` and `assets/css/style.scss` listed but unused
+
+**Problem:** The target structure includes `_sass/ukbol.scss` and `assets/css/style.scss` but all styles are defined inline in `_layouts/default.html`. These files are never referenced in the implementation steps.
+
+**Fix:** Remove `_sass/` and `assets/css/style.scss` from the target repo structure, or add an implementation step to extract the inline styles into these files. The inline approach is simpler and works fine.
+
+#### 13. Permalink structure may conflict with portal pages
+
+**Problem:** The `_config.yml` sets `permalink: /:title/` which adds trailing slashes. This is fine for Jekyll-processed pages (`about/`, `projects/`). However, confirm that this permalink setting does NOT affect the standalone HTML portal pages (it shouldn't, since they lack front matter — but worth verifying during testing).
+
+**Fix:** Add a note to Phase 7 testing: "Verify that the `permalink` setting does not affect portal HTML files (they should be served at their literal file paths, e.g., `/species/bold_coi.html`)."
+
+#### 14. No mention of `Gemfile` for local development
+
+**Problem:** Step 22 suggests `bundle init && bundle add jekyll` but doesn't mention committing a `Gemfile` or `Gemfile.lock`. GitHub Pages uses its own gem versions, so these files aren't strictly needed for deployment. But for local development consistency, they're useful.
+
+**Fix:** Add a note: "Optionally commit `Gemfile` and `Gemfile.lock` for reproducible local development. Add them to `.gitignore` if you prefer not to track them." Also add `Gemfile` and `Gemfile.lock` to the `_config.yml` exclude list to prevent Jekyll from copying them to the built site.
+
+#### 15. No `robots.txt` or sitemap
+
+**Problem:** No mention of SEO basics. If the old `ukbol.org` Drupal site is currently indexed by search engines, the migration will affect search rankings.
+
+**Fix:** Add `jekyll-sitemap` to the `_config.yml` plugins list (it's supported by GitHub Pages and generates `/sitemap.xml` automatically). Consider adding a `robots.txt` to `docs/`:
+```
+User-agent: *
+Allow: /
+Sitemap: https://ukbol.org/sitemap.xml
+```
+
+---
+
+### Items the Plan Handles Correctly
+
+For completeness, these aspects are well-covered:
+
+- **Relative links within portal** — All portal internal links (`bold_coi.html`, `data/bold_coi.json.gz`, `index.html`) are relative. They will continue to work after the move to `docs/species/` without modification. Verified in both the HTML output and `build.py` source.
+- **Jekyll passthrough for HTML without front matter** — Correctly identified that portal HTML files lack `---` front matter and will be copied through by Jekyll untouched.
+- **Bootstrap version consistency** — Both Jekyll pages and portal use Bootstrap 5.3.3 via CDN.
+- **Design/branding coherence** — Colour palette, typography, and gradient styles are extracted from the existing portal and applied consistently.
+- **baseurl configuration** — Correctly set to `""` for custom domain use.
+- **URL structure** — The target URL table is correct and clean.
