@@ -60,7 +60,7 @@ GENE_DEFAULT_FILTERS = {
     'its': {'kingdom': 'Fungi'},
     'unite': {'kingdom': 'Fungi'},
     '12s': {'phylum': 'Chordata'},
-    # 16s has no default filter
+    'mitogenome': {},  # No default filter - spans all kingdoms
 }
 
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
