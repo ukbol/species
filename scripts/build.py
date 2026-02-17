@@ -47,6 +47,12 @@ DTOL_STATUS_LABELS = {
     'BLACK': 'Missing',
 }
 
+# Status labels for ENA mitogenome datasets
+MITOGENOME_STATUS_LABELS = {
+    'GREEN': 'Has Mitogenome',
+    'BLACK': 'Missing',
+}
+
 # Default taxonomy filters for specific gene regions
 GENE_DEFAULT_FILTERS = {
     'coi': {'kingdom': 'Animalia'},
