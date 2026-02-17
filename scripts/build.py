@@ -381,7 +381,7 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
     btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
     status_buttons = '\n'.join([
         f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
-        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK']
+        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if s in status_labels
     ])
 
     # Build table column definitions based on columns present in the dataframe
