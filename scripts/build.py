@@ -274,13 +274,10 @@ footer a{{color:rgba(255,255,255,.9);}}
 </div>
 <div class="stat-card mb-5">
 <h4 class="mb-3">How to Use This Portal</h4>
-<div class="row">
-<div class="col-md-6">
 <p><strong>1. Select a Dataset</strong> - Click any card below to explore gap analysis data.</p>
 <p><strong>2. Filter &amp; Search</strong> - Use filters to find species by taxonomy, habitat, or conservation status.</p>
 <p><strong>3. Share &amp; Download</strong> - Share filtered views via URL or download as CSV.</p>
 </div>
-</div></div>
 <h3 class="mb-4">Available Datasets</h3>
 <div class="row g-4 mb-5">''')
 
