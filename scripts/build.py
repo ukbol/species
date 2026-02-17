@@ -958,14 +958,22 @@ def main():
 
         # Detect dataset type
         is_dtol = 'dtol_status' in df.columns
-        status_labels = DTOL_STATUS_LABELS if is_dtol else STATUS_LABELS
+        is_mitogenome = 'mitogenome_count' in df.columns
 
-        # Keep reference for cross-gene stats (exclude DToL - different coverage concept)
-        if not is_dtol:
+        if is_dtol:
+            status_labels = DTOL_STATUS_LABELS
+        elif is_mitogenome:
+            status_labels = MITOGENOME_STATUS_LABELS
+        else:
+            status_labels = STATUS_LABELS
+
+        # Keep reference for cross-gene stats (exclude DToL and mitogenome - different coverage concepts)
+        if not is_dtol and not is_mitogenome:
             all_dataframes.append(df)
 
+        dataset_type = 'DToL genome' if is_dtol else ('ENA mitogenome' if is_mitogenome else 'gene')
         print(f"  Rows: {len(df):,}")
-        print(f"  Dataset type: {'DToL genome' if is_dtol else 'gene'}")
+        print(f"  Dataset type: {dataset_type}")
         
         jncc_columns = get_jncc_columns(df)
         print(f"  JNCC columns with data: {len(jncc_columns)}")
