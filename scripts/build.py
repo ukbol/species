@@ -268,7 +268,7 @@ footer a{{color:rgba(255,255,255,.9);}}
 <div class="container">
 <div class="row g-4 mb-5">
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{valid_species:,}</div><div class="text-muted">Valid Species Assessed</div></div></div>
-<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{len(genes_data)}</div><div class="text-muted">Gene Regions</div></div></div>
+<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{len(genes_data)}</div><div class="text-muted">Datasets</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number text-success">{species_with_data:,}</div><div class="text-muted">Species with Data</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number" style="color:#343a40">{true_gaps:,}</div><div class="text-muted">True Gaps (No Data)</div></div></div>
 </div>
