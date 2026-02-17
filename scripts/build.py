@@ -683,6 +683,17 @@ function initializeTable() {
                 return '<span class="data-link">' + links + '</span>';
             }
         }
+        // Check for ENA mitogenome accessions
+        if (row.mitogenome_accessions && row.mitogenome_accessions.trim()) {
+            const ids = row.mitogenome_accessions.split(';').map(id => id.trim()).filter(id => id);
+            if (ids.length > 0) {
+                const links = ids.map(id => {
+                    const url = 'https://www.ebi.ac.uk/ena/browser/view/' + id;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
         return '—';
     };
     const RENDERERS = {
