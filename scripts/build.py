@@ -47,6 +47,12 @@ DTOL_STATUS_LABELS = {
     'BLACK': 'Missing',
 }
 
+# Status labels for ENA mitogenome datasets
+MITOGENOME_STATUS_LABELS = {
+    'GREEN': 'Has Mitogenome',
+    'BLACK': 'Missing',
+}
+
 # Default taxonomy filters for specific gene regions
 GENE_DEFAULT_FILTERS = {
     'coi': {'kingdom': 'Animalia'},
@@ -54,7 +60,7 @@ GENE_DEFAULT_FILTERS = {
     'its': {'kingdom': 'Fungi'},
     'unite': {'kingdom': 'Fungi'},
     '12s': {'phylum': 'Chordata'},
-    # 16s has no default filter
+    'mitogenome': {},  # No default filter - spans all kingdoms
 }
 
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
@@ -71,6 +77,7 @@ DISPLAY_COLUMNS = [
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
     ('gb_records', 'UK Records'),
+    ('mitogenome_count', 'Mitogenomes'),
     ('data_link', 'Data Link'),
 ]
 
@@ -261,27 +268,16 @@ footer a{{color:rgba(255,255,255,.9);}}
 <div class="container">
 <div class="row g-4 mb-5">
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{valid_species:,}</div><div class="text-muted">Valid Species Assessed</div></div></div>
-<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{len(genes_data)}</div><div class="text-muted">Gene Regions</div></div></div>
+<div class="col-md-3"><div class="stat-card text-center"><div class="stat-number">{len(genes_data)}</div><div class="text-muted">Datasets</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number text-success">{species_with_data:,}</div><div class="text-muted">Species with Data</div></div></div>
 <div class="col-md-3"><div class="stat-card text-center"><div class="stat-number" style="color:#343a40">{true_gaps:,}</div><div class="text-muted">True Gaps (No Data)</div></div></div>
 </div>
 <div class="stat-card mb-5">
 <h4 class="mb-3">How to Use This Portal</h4>
-<div class="row">
-<div class="col-md-6">
-<p><strong>1. Select a Gene Region</strong> - Click any card below to explore gap analysis data.</p>
+<p><strong>1. Select a Dataset</strong> - Click any card below to explore gap analysis data.</p>
 <p><strong>2. Filter &amp; Search</strong> - Use filters to find species by taxonomy, habitat, or conservation status.</p>
 <p><strong>3. Share &amp; Download</strong> - Share filtered views via URL or download as CSV.</p>
 </div>
-<div class="col-md-6">
-<p><strong>Traffic Light System:</strong></p>
-<div class="d-flex flex-wrap gap-2">
-<span class="status-badge status-GREEN">OK - Valid</span>
-<span class="status-badge status-BLUE">OK - Synonym</span>
-<span class="status-badge status-AMBER">OK - Valid + Synonym</span>
-<span class="status-badge status-RED">ID Conflict</span>
-<span class="status-badge status-BLACK">Missing</span>
-</div></div></div></div>
 <h3 class="mb-4">Available Datasets</h3>
 <div class="row g-4 mb-5">''')
 
@@ -374,7 +370,7 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
     btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
     status_buttons = '\n'.join([
         f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
-        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK']
+        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if s in status_labels
     ])
 
     # Build table column definitions based on columns present in the dataframe
@@ -676,6 +672,17 @@ function initializeTable() {
                 return '<span class="data-link">' + links + '</span>';
             }
         }
+        // Check for ENA mitogenome accessions
+        if (row.mitogenome_accessions && row.mitogenome_accessions.trim()) {
+            const ids = row.mitogenome_accessions.split(';').map(id => id.trim()).filter(id => id);
+            if (ids.length > 0) {
+                const links = ids.map(id => {
+                    const url = 'https://www.ebi.ac.uk/ena/browser/view/' + id;
+                    return '<a href="' + url + '" target="_blank" rel="noopener">&#128279;</a>';
+                }).join(' ');
+                return '<span class="data-link">' + links + '</span>';
+            }
+        }
         return '—';
     };
     const RENDERERS = {
@@ -952,14 +959,22 @@ def main():
 
         # Detect dataset type
         is_dtol = 'dtol_status' in df.columns
-        status_labels = DTOL_STATUS_LABELS if is_dtol else STATUS_LABELS
+        is_mitogenome = 'mitogenome_count' in df.columns
 
-        # Keep reference for cross-gene stats (exclude DToL - different coverage concept)
-        if not is_dtol:
+        if is_dtol:
+            status_labels = DTOL_STATUS_LABELS
+        elif is_mitogenome:
+            status_labels = MITOGENOME_STATUS_LABELS
+        else:
+            status_labels = STATUS_LABELS
+
+        # Keep reference for cross-gene stats (exclude DToL and mitogenome - different coverage concepts)
+        if not is_dtol and not is_mitogenome:
             all_dataframes.append(df)
 
+        dataset_type = 'DToL genome' if is_dtol else ('ENA mitogenome' if is_mitogenome else 'gene')
         print(f"  Rows: {len(df):,}")
-        print(f"  Dataset type: {'DToL genome' if is_dtol else 'gene'}")
+        print(f"  Dataset type: {dataset_type}")
         
         jncc_columns = get_jncc_columns(df)
         print(f"  JNCC columns with data: {len(jncc_columns)}")
