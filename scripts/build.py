@@ -77,6 +77,7 @@ DISPLAY_COLUMNS = [
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
     ('gb_records', 'UK Records'),
+    ('mitogenome_count', 'Mitogenomes'),
     ('data_link', 'Data Link'),
 ]
 
