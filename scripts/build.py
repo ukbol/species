@@ -55,6 +55,7 @@ MITOGENOME_STATUS_LABELS = {
 
 # Default taxonomy filters for specific gene regions
 GENE_DEFAULT_FILTERS = {
+    'diatom': {'class': 'Bacillariophyceae'},
     'coi': {'kingdom': 'Animalia'},
     'rbcl': {'kingdom': 'Plantae'},
     'its': {'kingdom': 'Fungi'},
@@ -844,6 +845,17 @@ function loadFiltersFromUrl() {
         if(DEFAULT_FILTERS.phylum){
             document.getElementById('filterPhylum').value=DEFAULT_FILTERS.phylum;
             updateCascadingDropdowns('phylum');
+        }
+        if(DEFAULT_FILTERS.class){
+            document.getElementById('filterClass').value=DEFAULT_FILTERS.class;
+            updateCascadingDropdowns('class');
+        }
+        if(DEFAULT_FILTERS.order){
+            document.getElementById('filterOrder').value=DEFAULT_FILTERS.order;
+            updateCascadingDropdowns('order');
+        }
+        if(DEFAULT_FILTERS.family){
+            document.getElementById('filterFamily').value=DEFAULT_FILTERS.family;
         }
         applyFilters();
     } else if(hasUrlFilters) {

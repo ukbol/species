@@ -46,7 +46,7 @@ table.dataTable th{font-size:.75rem;}
 <div class="container-fluid">
 <a class="navbar-brand" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Back to Portal</a>
 <span class="navbar-text fw-bold">16S (MIDORI)</span>
-<span class="navbar-text text-light opacity-75">79,085 species | Updated 2026-02-17</span>
+<span class="navbar-text text-light opacity-75">79,085 species | Updated 2026-02-21</span>
 </div></nav>
 <div class="container-fluid px-4">
 <div class="row">
@@ -456,6 +456,17 @@ function loadFiltersFromUrl() {
         if(DEFAULT_FILTERS.phylum){
             document.getElementById('filterPhylum').value=DEFAULT_FILTERS.phylum;
             updateCascadingDropdowns('phylum');
+        }
+        if(DEFAULT_FILTERS.class){
+            document.getElementById('filterClass').value=DEFAULT_FILTERS.class;
+            updateCascadingDropdowns('class');
+        }
+        if(DEFAULT_FILTERS.order){
+            document.getElementById('filterOrder').value=DEFAULT_FILTERS.order;
+            updateCascadingDropdowns('order');
+        }
+        if(DEFAULT_FILTERS.family){
+            document.getElementById('filterFamily').value=DEFAULT_FILTERS.family;
         }
         applyFilters();
     } else if(hasUrlFilters) {
