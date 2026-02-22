@@ -55,12 +55,18 @@ MITOGENOME_STATUS_LABELS = {
 
 # Default taxonomy filters for specific gene regions
 GENE_DEFAULT_FILTERS = {
+    'diatom': {'class': 'Bacillariophyceae'},
     'coi': {'kingdom': 'Animalia'},
     'rbcl': {'kingdom': 'Plantae'},
     'its': {'kingdom': 'Fungi'},
     'unite': {'kingdom': 'Fungi'},
     '12s': {'phylum': 'Chordata'},
     'mitogenome': {},  # No default filter - spans all kingdoms
+}
+
+# Display name overrides for datasets where the filename convention doesn't produce the right label
+DISPLAY_NAME_OVERRIDES = {
+    'diatom_rbcl': 'RBCL (Diat.barcode)',
 }
 
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
@@ -278,27 +284,31 @@ footer a{{color:rgba(255,255,255,.9);}}
 <p><strong>2. Filter &amp; Search</strong> - Use filters to find species by taxonomy, habitat, or conservation status.</p>
 <p><strong>3. Share &amp; Download</strong> - Share filtered views via URL or download as CSV.</p>
 </div>
-<h3 class="mb-4">Available Datasets</h3>
+<h3 class="mb-4">Gene Datasets</h3>
 <div class="row g-4 mb-5">''')
 
-    for gene in genes_data:
-        stats = gene['stats']
-        status_counts = stats['status_counts']
-        total = stats['total_species']
-        bar_segments = []
-        for status in ['GREEN', 'AMBER', 'RED', 'BLUE', 'BLACK']:
-            count = status_counts.get(status, 0)
-            if count > 0:
-                pct = (count / total) * 100
-                color = STATUS_COLORS.get(status, '#6c757d')
-                bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
-        bar_html = ''.join(bar_segments)
-        
-        gene_labels = gene.get('status_labels', STATUS_LABELS)
-        badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
-                         for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
-        
-        html_parts.append(f'''<div class="col-md-6 col-lg-4">
+    gene_datasets = [g for g in genes_data if g['dataset_type'] == 'gene']
+    genome_datasets = [g for g in genes_data if g['dataset_type'] != 'gene']
+
+    def render_dataset_cards(datasets):
+        for gene in datasets:
+            stats = gene['stats']
+            status_counts = stats['status_counts']
+            total = stats['total_species']
+            bar_segments = []
+            for status in ['GREEN', 'AMBER', 'RED', 'BLUE', 'BLACK']:
+                count = status_counts.get(status, 0)
+                if count > 0:
+                    pct = (count / total) * 100
+                    color = STATUS_COLORS.get(status, '#6c757d')
+                    bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
+            bar_html = ''.join(bar_segments)
+
+            gene_labels = gene.get('status_labels', STATUS_LABELS)
+            badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
+                             for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
+
+            html_parts.append(f'''<div class="col-md-6 col-lg-4">
 <a href="{gene['filename']}" class="text-decoration-none">
 <div class="gene-card h-100">
 <div class="card-header">{gene['display_name']}</div>
@@ -308,7 +318,13 @@ footer a{{color:rgba(255,255,255,.9);}}
 <div class="d-flex flex-wrap gap-1">{badges}</div>
 </div></div></a></div>''')
 
+    render_dataset_cards(gene_datasets)
     html_parts.append('</div>')
+
+    if genome_datasets:
+        html_parts.append('<h3 class="mb-4">Genome Datasets</h3>\n<div class="row g-4 mb-5">')
+        render_dataset_cards(genome_datasets)
+        html_parts.append('</div>')
 
     if zenodo_links:
         html_parts.append('<h3 class="mb-4">Related Datasets (Zenodo)</h3><div class="row g-4 mb-5">')
@@ -845,6 +861,17 @@ function loadFiltersFromUrl() {
             document.getElementById('filterPhylum').value=DEFAULT_FILTERS.phylum;
             updateCascadingDropdowns('phylum');
         }
+        if(DEFAULT_FILTERS.class){
+            document.getElementById('filterClass').value=DEFAULT_FILTERS.class;
+            updateCascadingDropdowns('class');
+        }
+        if(DEFAULT_FILTERS.order){
+            document.getElementById('filterOrder').value=DEFAULT_FILTERS.order;
+            updateCascadingDropdowns('order');
+        }
+        if(DEFAULT_FILTERS.family){
+            document.getElementById('filterFamily').value=DEFAULT_FILTERS.family;
+        }
         applyFilters();
     } else if(hasUrlFilters) {
         applyFilters();
@@ -945,8 +972,8 @@ def main():
         # Strip date prefix and _gap_analysis suffix for stable output filenames
         gene_name = re.sub(r'^\d{4}-\d{2}-\d{2}_', '', tsv_path.stem)
         gene_name = re.sub(r'_gap_analysis$', '', gene_name)
-        display_name = get_gene_name(str(tsv_path))
-        
+        display_name = DISPLAY_NAME_OVERRIDES.get(gene_name, get_gene_name(str(tsv_path)))
+
         print(f"\nProcessing: {filename}")
         print(f"  Display name: {display_name}")
         
@@ -1011,6 +1038,7 @@ def main():
             'display_name': display_name,
             'stats': stats,
             'status_labels': status_labels,
+            'dataset_type': dataset_type,
         })
     
     # Zenodo links
