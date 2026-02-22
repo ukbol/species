@@ -245,27 +245,47 @@ def generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_
 <title>UKBOL Gap Analysis Data Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-:root{{--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}}
-body{{font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#e4e8ec 100%);min-height:100vh;}}
-.hero{{background:linear-gradient(135deg,#1a365d 0%,#2d5a87 100%);color:#fff;padding:3rem 0;margin-bottom:2rem;}}
-.hero h1{{font-weight:700;}}
+:root{{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}}
+body{{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);min-height:100vh;display:flex;flex-direction:column;}}
+main{{flex:1;}}
+a{{color:var(--ukbol-primary-mid);}}a:hover{{color:var(--ukbol-primary);}}
+h1,h2{{color:var(--ukbol-primary);}}h3{{color:var(--ukbol-primary-mid);}}
+.site-nav{{background:#fff;border-bottom:2px solid #e8f4f8;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:.5rem 0;}}
+.site-nav .navbar-brand img{{height:45px;}}
+.site-nav a{{color:var(--ukbol-primary);text-decoration:none;font-weight:500;}}
+.site-nav a:hover{{color:var(--ukbol-primary-mid);}}
+.page-hero{{background:linear-gradient(135deg,#1a4d5a 0%,#2b7a8c 100%);color:#fff;padding:3rem 0;margin-bottom:2rem;}}
+.page-hero h1{{font-weight:700;color:#fff;}}
 .stat-card{{background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s;height:100%;}}
-.stat-card:hover{{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.12);}}
-.stat-number{{font-size:2.5rem;font-weight:700;color:#1a365d;}}
-.gene-card{{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s;}}
-.gene-card:hover{{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.12);}}
-.gene-card .card-header{{background:linear-gradient(135deg,#1a365d 0%,#2d5a87 100%);color:#fff;font-weight:600;padding:1rem 1.25rem;}}
+.stat-card:hover{{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,77,90,.15);}}
+.stat-number{{font-size:2.5rem;font-weight:700;color:var(--ukbol-primary);}}
+.gene-card{{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;}}
+.gene-card:hover{{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,77,90,.15);}}
+.gene-card .card-header{{background:linear-gradient(135deg,#1a4d5a 0%,#2b7a8c 100%);color:#fff;font-weight:600;padding:1rem 1.25rem;}}
 .status-badge{{display:inline-block;padding:.25em .6em;font-size:.75rem;font-weight:600;border-radius:4px;color:#fff;}}
 .status-GREEN{{background:var(--ukbol-green);}}.status-AMBER{{background:var(--ukbol-amber);color:#000;}}.status-RED{{background:var(--ukbol-red);}}.status-BLUE{{background:var(--ukbol-blue);}}.status-BLACK{{background:var(--ukbol-black);}}
 .mini-bar{{height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;display:flex;}}
 .mini-bar-segment{{height:100%;}}
-.zenodo-card{{border-left:4px solid #0d6efd;}}
-footer{{background:#1a365d;color:rgba(255,255,255,.8);padding:2rem 0;margin-top:4rem;}}
+.zenodo-card{{border-left:4px solid var(--ukbol-primary-mid);}}
+footer{{background:var(--ukbol-primary);color:rgba(255,255,255,.8);padding:2rem 0;margin-top:3rem;}}
 footer a{{color:rgba(255,255,255,.9);}}
+footer .footer-logo{{height:60px;filter:brightness(0) invert(1);}}
+.funding-line{{font-size:.85rem;color:rgba(255,255,255,.5);}}
+.funding-line a{{color:rgba(255,255,255,.6);}}
 </style>
 </head>
 <body>
-<div class="hero">
+<nav class="site-nav">
+<div class="container d-flex align-items-center justify-content-between">
+<a class="navbar-brand" href="index.html"><img src="assets/images/ukbol-text-logo-clear.png" alt="UKBOL"></a>
+<div class="d-flex gap-3 align-items-center">
+<a href="https://ukbol.org/">UKBOL Home</a>
+<a href="index.html" style="font-weight:700;color:#2b7a8c;">Data Portal</a>
+</div>
+</div>
+</nav>
+<main>
+<div class="page-hero">
 <div class="container">
 <div class="row align-items-center">
 <div class="col-lg-8"><h1>UKBOL Gap Analysis</h1><p class="lead mb-0">Tracking DNA barcode coverage for UK biodiversity</p></div>
@@ -353,8 +373,10 @@ footer a{{color:rgba(255,255,255,.9);}}
 </table></div>'''
 
     html_parts.append(f'''</div>
+</main>
 <footer><div class="container text-center">
-<p class="mb-2">UK Barcode of Life (UKBOL) Gap Analysis Portal</p>
+<img src="assets/images/ukbol-text-logo-clear.png" alt="UKBOL" class="footer-logo mb-2">
+<p class="mb-1">UK Barcode of Life (UKBOL)</p>
 <p class="small mb-0">Part of <a href="https://ibol.org/" target="_blank">International Barcode of Life</a> | Data generated {build_date}</p>
 {metadata_html}
 </div></footer>
@@ -411,9 +433,16 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
 <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
-:root{--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
-.navbar{background:linear-gradient(135deg,#1a365d 0%,#2d5a87 100%)!important;}
+:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);}
+a{color:var(--ukbol-primary-mid);}a:hover{color:var(--ukbol-primary);}
+h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
+.site-nav{background:#fff;border-bottom:2px solid #e8f4f8;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:.5rem 0;}
+.site-nav .navbar-brand img{height:45px;}
+.site-nav a{color:var(--ukbol-primary);text-decoration:none;font-weight:500;}
+.site-nav a:hover{color:var(--ukbol-primary-mid);}
+.site-nav .dataset-name{font-weight:700;color:var(--ukbol-primary);}
+.site-nav .dataset-meta{color:#6c757d;font-size:.85rem;}
 .stat-card,.filter-panel,.chart-container,.table-container{background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);}
 .chart-container,.table-container,.filter-panel{margin-bottom:1.5rem;}
 .chart-container{overflow:hidden;}
@@ -424,7 +453,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
 #activeFilters:empty::before{content:"No filters active";color:#6c757d;font-style:italic;}
 .loading{text-align:center;padding:3rem;}
-.loading-spinner{display:inline-block;width:3rem;height:3rem;border:3px solid #f3f3f3;border-top:3px solid #3498db;border-radius:50%;animation:spin 1s linear infinite;}
+.loading-spinner{display:inline-block;width:3rem;height:3rem;border:3px solid #f3f3f3;border-top:3px solid var(--ukbol-primary-mid);border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .url-indicator{position:fixed;bottom:20px;right:20px;background:#fff;padding:.75rem 1rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:.85rem;z-index:1000;display:none;}
 .url-indicator.show{display:block;}
@@ -446,11 +475,16 @@ table.dataTable th{font-size:.75rem;}
 </style>
 </head>
 <body>
-<nav class="navbar navbar-dark mb-4">
-<div class="container-fluid">
-<a class="navbar-brand" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Back to Portal</a>
-<span class="navbar-text fw-bold">''' + display_name + '''</span>
-<span class="navbar-text text-light opacity-75">''' + f"{stats['total_species']:,}" + ''' species | Updated ''' + build_date + '''</span>
+<nav class="site-nav">
+<div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+<div class="d-flex align-items-center gap-3">
+<a class="navbar-brand" href="index.html"><img src="assets/images/ukbol-text-logo-clear.png" alt="UKBOL"></a>
+<a href="index.html" style="color:var(--ukbol-primary-mid);font-weight:600;">&#8592; Portal</a>
+</div>
+<div class="d-flex align-items-center gap-3">
+<span class="dataset-name">''' + display_name + '''</span>
+<span class="dataset-meta">''' + f"{stats['total_species']:,}" + ''' species | Updated ''' + build_date + '''</span>
+</div>
 </div></nav>
 <div class="container-fluid px-4">
 <div class="row">
@@ -956,7 +990,16 @@ def main():
     
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / 'data').mkdir(parents=True, exist_ok=True)
-    
+
+    # Copy logo assets to output directory
+    assets_src = script_dir / 'assets' / 'images'
+    assets_dst = output_dir / 'assets' / 'images'
+    if assets_src.exists():
+        assets_dst.mkdir(parents=True, exist_ok=True)
+        for img in assets_src.glob('*'):
+            shutil.copy2(img, assets_dst / img.name)
+        print(f"Copied logo assets to {assets_dst}")
+
     tsv_files = list(data_dir.glob('*.tsv'))
     if not tsv_files:
         print(f"\n[ERROR] No TSV files found in {data_dir}")
