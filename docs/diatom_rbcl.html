@@ -7,9 +7,16 @@
 <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
-:root{--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
-.navbar{background:linear-gradient(135deg,#1a365d 0%,#2d5a87 100%)!important;}
+:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);}
+a{color:var(--ukbol-primary-mid);}a:hover{color:var(--ukbol-primary);}
+h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
+.site-nav{background:#fff;border-bottom:2px solid #e8f4f8;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:.5rem 0;}
+.site-nav .navbar-brand img{height:45px;}
+.site-nav a{color:var(--ukbol-primary);text-decoration:none;font-weight:500;}
+.site-nav a:hover{color:var(--ukbol-primary-mid);}
+.site-nav .dataset-name{font-weight:700;color:var(--ukbol-primary);}
+.site-nav .dataset-meta{color:#6c757d;font-size:.85rem;}
 .stat-card,.filter-panel,.chart-container,.table-container{background:#fff;border-radius:12px;padding:1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);}
 .chart-container,.table-container,.filter-panel{margin-bottom:1.5rem;}
 .chart-container{overflow:hidden;}
@@ -20,7 +27,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
 #activeFilters:empty::before{content:"No filters active";color:#6c757d;font-style:italic;}
 .loading{text-align:center;padding:3rem;}
-.loading-spinner{display:inline-block;width:3rem;height:3rem;border:3px solid #f3f3f3;border-top:3px solid #3498db;border-radius:50%;animation:spin 1s linear infinite;}
+.loading-spinner{display:inline-block;width:3rem;height:3rem;border:3px solid #f3f3f3;border-top:3px solid var(--ukbol-primary-mid);border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .url-indicator{position:fixed;bottom:20px;right:20px;background:#fff;padding:.75rem 1rem;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:.85rem;z-index:1000;display:none;}
 .url-indicator.show{display:block;}
@@ -42,11 +49,16 @@ table.dataTable th{font-size:.75rem;}
 </style>
 </head>
 <body>
-<nav class="navbar navbar-dark mb-4">
-<div class="container-fluid">
-<a class="navbar-brand" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Back to Portal</a>
-<span class="navbar-text fw-bold">RBCL (Diat.barcode)</span>
-<span class="navbar-text text-light opacity-75">79,085 species | Updated 2026-02-22</span>
+<nav class="site-nav">
+<div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+<div class="d-flex align-items-center gap-3">
+<a class="navbar-brand" href="index.html"><img src="assets/images/ukbol-text-logo-clear.png" alt="UKBOL"></a>
+<a href="index.html" style="color:var(--ukbol-primary-mid);font-weight:600;">&#8592; Portal</a>
+</div>
+<div class="d-flex align-items-center gap-3">
+<span class="dataset-name">RBCL (Diat.barcode)</span>
+<span class="dataset-meta">79,085 species | Updated 2026-02-22</span>
+</div>
 </div></nav>
 <div class="container-fluid px-4">
 <div class="row">
