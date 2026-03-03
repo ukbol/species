@@ -183,12 +183,15 @@ def get_filter_options(df):
 
 def compute_cross_gene_stats(dataframes):
     """
-    Compute summary statistics across all gene datasets.
-    
+    Compute summary statistics across all gene datasets using a union/additive approach.
+
+    Focused datasets (e.g. diatom-only, pest-only) add their species to the total
+    rather than reducing it. A species only needs to appear in one dataset to be counted.
+
     Returns dict with:
-    - valid_species: count of unique species across all datasets
-    - species_with_data: count of species with GREEN status in at least one gene
-    - true_gaps: count of species with BLACK status across ALL genes
+    - valid_species: union of unique species across all datasets
+    - species_with_data: species with GREEN status in at least one dataset
+    - true_gaps: species with BLACK status in every dataset they appear in
     """
     if not dataframes:
         return {'valid_species': 0, 'species_with_data': 0, 'true_gaps': 0}
@@ -199,23 +202,31 @@ def compute_cross_gene_stats(dataframes):
     if not valid_dfs:
         return {'valid_species': 0, 'species_with_data': 0, 'true_gaps': 0}
     
-    # Start with first dataset as base (deduplicated)
-    base_df = valid_dfs[0][['taxon_name']].drop_duplicates()
-    
-    # Merge status from each dataset
-    for i, df in enumerate(valid_dfs):
+    # Start with first dataset as base (deduplicated), preserving its status
+    base_df = valid_dfs[0][['taxon_name', 'species_status']].drop_duplicates(subset='taxon_name', keep='first')
+    base_df = base_df.rename(columns={'species_status': 'status_0'})
+
+    # OUTER JOIN each additional dataset — union/additive approach: focused datasets
+    # (e.g. diatom-only, pest-only) add their species to the total rather than
+    # collapsing it. Species absent from a dataset get NaN for that status column.
+    for i, df in enumerate(valid_dfs[1:], 1):
         df_dedup = df[['taxon_name', 'species_status']].drop_duplicates(subset='taxon_name', keep='first')
         df_dedup = df_dedup.rename(columns={'species_status': f'status_{i}'})
-        base_df = base_df.merge(df_dedup, on='taxon_name', how='inner')
-    
+        base_df = base_df.merge(df_dedup, on='taxon_name', how='outer')
+
     status_cols = [c for c in base_df.columns if c.startswith('status_')]
-    
-    # Species with at least one GREEN across all genes
+
+    # Species with at least one GREEN in any dataset they appear in
     has_green = (base_df[status_cols] == 'GREEN').any(axis=1)
     species_with_data = int(has_green.sum())
-    
-    # Species with BLACK across ALL genes (no data anywhere)
-    all_black = (base_df[status_cols] == 'BLACK').all(axis=1)
+
+    # True gaps: species whose status is BLACK in every dataset they appear in.
+    # NaN means the dataset doesn't cover that species — those columns are ignored.
+    def _is_true_gap(row):
+        present = [v for v in row if pd.notna(v) and v != '']
+        return bool(present) and all(s == 'BLACK' for s in present)
+
+    all_black = base_df[status_cols].apply(_is_true_gap, axis=1)
     true_gaps = int(all_black.sum())
     
     return {
