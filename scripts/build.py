@@ -34,7 +34,7 @@ STATUS_LABELS = {
     'GREEN': 'Valid',
     'BLUE': 'Synonym',
     'AMBER': 'Mixed',
-    'ORANGE': 'Conflict - interim ID',
+    'ORANGE': 'Interim ID',
     'RED': 'Conflict',
     'BLACK': 'Missing',
 }
