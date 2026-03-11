@@ -25,16 +25,17 @@ import argparse
 import re
 
 STATUS_COLORS = {
-    'GREEN': '#198754', 'AMBER': '#ffc107', 'RED': '#dc3545',
-    'BLUE': '#0d6efd', 'BLACK': '#343a40',
+    'GREEN': '#198754', 'AMBER': '#ffc107', 'ORANGE': '#fd7e14',
+    'RED': '#dc3545', 'BLUE': '#0d6efd', 'BLACK': '#343a40',
 }
 
 # Shortened status labels for display (gene datasets)
 STATUS_LABELS = {
-    'GREEN': 'OK - Valid',
-    'BLUE': 'OK - Synonym',
-    'AMBER': 'OK - Valid + Synonym',
-    'RED': 'ID Conflict',
+    'GREEN': 'Valid',
+    'BLUE': 'Synonym',
+    'AMBER': 'Mixed',
+    'ORANGE': 'Conflict - interim ID',
+    'RED': 'Conflict',
     'BLACK': 'Missing',
 }
 
@@ -256,7 +257,7 @@ def generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_
 <title>UKBOL Gap Analysis Data Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-:root{{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}}
+:root{{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-orange:#fd7e14;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}}
 body{{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);min-height:100vh;display:flex;flex-direction:column;}}
 main{{flex:1;}}
 a{{color:var(--ukbol-primary-mid);}}a:hover{{color:var(--ukbol-primary);}}
@@ -274,7 +275,7 @@ h1,h2{{color:var(--ukbol-primary);}}h3{{color:var(--ukbol-primary-mid);}}
 .gene-card:hover{{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,77,90,.15);}}
 .gene-card .card-header{{background:linear-gradient(135deg,#1a4d5a 0%,#2b7a8c 100%);color:#fff;font-weight:600;padding:1rem 1.25rem;}}
 .status-badge{{display:inline-block;padding:.25em .6em;font-size:.75rem;font-weight:600;border-radius:4px;color:#fff;}}
-.status-GREEN{{background:var(--ukbol-green);}}.status-AMBER{{background:var(--ukbol-amber);color:#000;}}.status-RED{{background:var(--ukbol-red);}}.status-BLUE{{background:var(--ukbol-blue);}}.status-BLACK{{background:var(--ukbol-black);}}
+.status-GREEN{{background:var(--ukbol-green);}}.status-AMBER{{background:var(--ukbol-amber);color:#000;}}.status-ORANGE{{background:var(--ukbol-orange);}}.status-RED{{background:var(--ukbol-red);}}.status-BLUE{{background:var(--ukbol-blue);}}.status-BLACK{{background:var(--ukbol-black);}}
 .mini-bar{{height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;display:flex;}}
 .mini-bar-segment{{height:100%;}}
 .zenodo-card{{border-left:4px solid var(--ukbol-primary-mid);}}
@@ -327,7 +328,7 @@ footer .footer-logo{{height:60px;filter:brightness(0) invert(1);}}
             status_counts = stats['status_counts']
             total = stats['total_species']
             bar_segments = []
-            for status in ['GREEN', 'AMBER', 'RED', 'BLUE', 'BLACK']:
+            for status in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK']:
                 count = status_counts.get(status, 0)
                 if count > 0:
                     pct = (count / total) * 100
@@ -337,7 +338,7 @@ footer .footer-logo{{height:60px;filter:brightness(0) invert(1);}}
 
             gene_labels = gene.get('status_labels', STATUS_LABELS)
             badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
-                             for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
+                             for s in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
 
             html_parts.append(f'''<div class="col-md-6 col-lg-4">
 <a href="{gene['filename']}" class="text-decoration-none">
@@ -416,10 +417,10 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
     default_filters = get_default_filter_for_gene(gene_name)
 
     # Build status filter buttons from labels
-    btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
+    btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'ORANGE': 'btn-outline-orange', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
     status_buttons = '\n'.join([
         f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
-        for s in ['GREEN', 'BLUE', 'AMBER', 'RED', 'BLACK'] if s in status_labels
+        for s in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK'] if s in status_labels
     ])
 
     # Build table column definitions based on columns present in the dataframe
@@ -444,7 +445,7 @@ def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filte
 <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
-:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
+:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-orange:#fd7e14;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);}
 a{color:var(--ukbol-primary-mid);}a:hover{color:var(--ukbol-primary);}
 h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
@@ -459,7 +460,7 @@ h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
 .chart-container{overflow:hidden;}
 .filter-panel h5{margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e9ecef;}
 .status-badge{display:inline-block;padding:.15em .45em;font-size:.7rem;font-weight:600;border-radius:4px;color:#fff;white-space:nowrap;}
-.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
+.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-ORANGE{background:var(--ukbol-orange);}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
 .filter-tag{display:inline-flex;align-items:center;gap:.25rem;background:#e7f1ff;color:#0d6efd;padding:.25rem .75rem;border-radius:20px;font-size:.85rem;margin:.25rem;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
 #activeFilters:empty::before{content:"No filters active";color:#6c757d;font-style:italic;}
@@ -479,6 +480,7 @@ table.dataTable th{font-size:.75rem;}
 .data-link a{text-decoration:none;margin-right:0.25rem;font-size:.85rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
+.btn-outline-orange{color:#fd7e14;border-color:#fd7e14;}.btn-outline-orange:hover,.btn-outline-orange.active{color:#fff;background-color:#fd7e14;border-color:#fd7e14;}
 .status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
 @media(hover:none){.status-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
@@ -569,7 +571,7 @@ table.dataTable th{font-size:.75rem;}
 <script>
 const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
-const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
+const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","ORANGE":"#fd7e14","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
 const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
 const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
 const TABLE_COLUMNS = ''' + json.dumps(table_columns) + ''';
@@ -824,8 +826,8 @@ function updateActiveFiltersDisplay(filters) {
     if (filters.order) addTag('Order',filters.order,"document.getElementById('filterOrder').value='';applyFilters()");
     if (filters.family) addTag('Family',filters.family,"document.getElementById('filterFamily').value='';applyFilters()");
     // Show status filters when not all are selected
-    const allStatuses = ['GREEN','BLUE','AMBER','RED','BLACK'];
-    if (filters.statuses.length > 0 && filters.statuses.length < 5) {
+    const allStatuses = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'];
+    if (filters.statuses.length > 0 && filters.statuses.length < allStatuses.length) {
         const excludedStatuses = allStatuses.filter(s => !filters.statuses.includes(s));
         excludedStatuses.forEach(status => {
             addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
@@ -849,7 +851,7 @@ function updateCharts() {
     const orderData = {};
     filteredData.forEach(row => {const order = row.order || 'Unknown';const status = row.species_status || 'Unknown';if(!orderData[order])orderData[order]={};orderData[order][status]=(orderData[order][status]||0)+1;});
     const sortedOrders = Object.entries(orderData).map(([order,counts])=>({order,total:Object.values(counts).reduce((a,b)=>a+b,0),counts})).sort((a,b)=>b.total-a.total).slice(0,20);
-    const barTraces = ['GREEN','BLUE','AMBER','RED','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
+    const barTraces = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
     Plotly.newPlot('barChart',barTraces,{barmode:'stack',margin:{t:20,b:100,l:50,r:20},legend:{orientation:'h',y:1.1},xaxis:{tickangle:-45}},{responsive:true});
 }
 function updateUrl(filters) {
