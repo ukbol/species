@@ -5,7 +5,7 @@
 <title>UKBOL Gap Analysis Data Portal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
+:root{--ukbol-primary:#1a4d5a;--ukbol-primary-mid:#2b7a8c;--ukbol-accent-light:#6ab8c8;--ukbol-gold:#d4a017;--ukbol-text:#343a40;--ukbol-bg:#f5f7fa;--ukbol-green:#198754;--ukbol-amber:#ffc107;--ukbol-orange:#fd7e14;--ukbol-red:#dc3545;--ukbol-blue:#0d6efd;--ukbol-black:#343a40;}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ukbol-bg);color:var(--ukbol-text);min-height:100vh;display:flex;flex-direction:column;}
 main{flex:1;}
 a{color:var(--ukbol-primary-mid);}a:hover{color:var(--ukbol-primary);}
@@ -23,7 +23,7 @@ h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
 .gene-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,77,90,.15);}
 .gene-card .card-header{background:linear-gradient(135deg,#1a4d5a 0%,#2b7a8c 100%);color:#fff;font-weight:600;padding:1rem 1.25rem;}
 .status-badge{display:inline-block;padding:.25em .6em;font-size:.75rem;font-weight:600;border-radius:4px;color:#fff;}
-.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
+.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-ORANGE{background:var(--ukbol-orange);}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
 .mini-bar{height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;display:flex;}
 .mini-bar-segment{height:100%;}
 .zenodo-card{border-left:4px solid var(--ukbol-primary-mid);}
@@ -49,7 +49,7 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="container">
 <div class="row align-items-center">
 <div class="col-lg-8"><h1>UKBOL Gap Analysis</h1><p class="lead mb-0">Tracking DNA barcode coverage for UK biodiversity</p></div>
-<div class="col-lg-4 text-lg-end mt-3 mt-lg-0"><span class="badge bg-light text-dark px-3 py-2">Updated: 2026-03-03</span></div>
+<div class="col-lg-4 text-lg-end mt-3 mt-lg-0"><span class="badge bg-light text-dark px-3 py-2">Updated: 2026-03-11</span></div>
 </div></div></div>
 <div class="container">
 <div class="row g-4 mb-5">
@@ -72,8 +72,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">COI (BOLD)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">14,633 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:18.5%;background:#198754"></div><div class="mini-bar-segment" style="width:0.7%;background:#ffc107"></div><div class="mini-bar-segment" style="width:15.2%;background:#dc3545"></div><div class="mini-bar-segment" style="width:0.9%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:64.7%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 14,633</small><small class="status-badge status-BLUE">OK - Synonym: 678</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 588</small><small class="status-badge status-RED">ID Conflict: 12,050</small><small class="status-badge status-BLACK">Missing: 51,136</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:18.5%;background:#198754"></div><div class="mini-bar-segment" style="width:0.9%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.7%;background:#ffc107"></div><div class="mini-bar-segment" style="width:1.3%;background:#fd7e14"></div><div class="mini-bar-segment" style="width:13.9%;background:#dc3545"></div><div class="mini-bar-segment" style="width:64.7%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 14,633</small><small class="status-badge status-BLUE">Synonym: 678</small><small class="status-badge status-AMBER">Mixed: 588</small><small class="status-badge status-ORANGE">Interim ID: 1,035</small><small class="status-badge status-RED">Conflict: 11,015</small><small class="status-badge status-BLACK">Missing: 51,136</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
 <a href="midori_12s.html" class="text-decoration-none">
@@ -81,8 +81,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">12S (MIDORI)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">6,438 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:8.1%;background:#198754"></div><div class="mini-bar-segment" style="width:0.1%;background:#ffc107"></div><div class="mini-bar-segment" style="width:2.8%;background:#dc3545"></div><div class="mini-bar-segment" style="width:0.8%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:88.1%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 6,438</small><small class="status-badge status-BLUE">OK - Synonym: 621</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 118</small><small class="status-badge status-RED">ID Conflict: 2,253</small><small class="status-badge status-BLACK">Missing: 69,655</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:8.1%;background:#198754"></div><div class="mini-bar-segment" style="width:0.8%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.1%;background:#ffc107"></div><div class="mini-bar-segment" style="width:2.8%;background:#dc3545"></div><div class="mini-bar-segment" style="width:88.1%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 6,438</small><small class="status-badge status-BLUE">Synonym: 621</small><small class="status-badge status-AMBER">Mixed: 118</small><small class="status-badge status-RED">Conflict: 2,253</small><small class="status-badge status-BLACK">Missing: 69,655</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
 <a href="midori_16s.html" class="text-decoration-none">
@@ -90,8 +90,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">16S (MIDORI)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">8,886 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:11.2%;background:#198754"></div><div class="mini-bar-segment" style="width:0.2%;background:#ffc107"></div><div class="mini-bar-segment" style="width:3.4%;background:#dc3545"></div><div class="mini-bar-segment" style="width:1.1%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:84.1%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 8,886</small><small class="status-badge status-BLUE">OK - Synonym: 864</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 161</small><small class="status-badge status-RED">ID Conflict: 2,664</small><small class="status-badge status-BLACK">Missing: 66,510</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:11.2%;background:#198754"></div><div class="mini-bar-segment" style="width:1.1%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.2%;background:#ffc107"></div><div class="mini-bar-segment" style="width:3.4%;background:#dc3545"></div><div class="mini-bar-segment" style="width:84.1%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 8,886</small><small class="status-badge status-BLUE">Synonym: 864</small><small class="status-badge status-AMBER">Mixed: 161</small><small class="status-badge status-RED">Conflict: 2,664</small><small class="status-badge status-BLACK">Missing: 66,510</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
 <a href="ncbi_rbcl.html" class="text-decoration-none">
@@ -99,8 +99,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">RBCL (NCBI)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">1,361 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:1.7%;background:#198754"></div><div class="mini-bar-segment" style="width:0.0%;background:#ffc107"></div><div class="mini-bar-segment" style="width:6.5%;background:#dc3545"></div><div class="mini-bar-segment" style="width:0.1%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:91.7%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 1,361</small><small class="status-badge status-BLUE">OK - Synonym: 69</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 31</small><small class="status-badge status-RED">ID Conflict: 5,131</small><small class="status-badge status-BLACK">Missing: 72,493</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:1.7%;background:#198754"></div><div class="mini-bar-segment" style="width:0.1%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.0%;background:#ffc107"></div><div class="mini-bar-segment" style="width:6.5%;background:#dc3545"></div><div class="mini-bar-segment" style="width:91.7%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 1,361</small><small class="status-badge status-BLUE">Synonym: 69</small><small class="status-badge status-AMBER">Mixed: 31</small><small class="status-badge status-RED">Conflict: 5,131</small><small class="status-badge status-BLACK">Missing: 72,493</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
 <a href="unite_its.html" class="text-decoration-none">
@@ -108,8 +108,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">ITS (UNITE)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">9,933 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:12.6%;background:#198754"></div><div class="mini-bar-segment" style="width:0.5%;background:#ffc107"></div><div class="mini-bar-segment" style="width:1.4%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:85.5%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 9,933</small><small class="status-badge status-BLUE">OK - Synonym: 1,112</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 391</small><small class="status-badge status-BLACK">Missing: 67,649</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:12.6%;background:#198754"></div><div class="mini-bar-segment" style="width:1.4%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.5%;background:#ffc107"></div><div class="mini-bar-segment" style="width:85.5%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 9,933</small><small class="status-badge status-BLUE">Synonym: 1,112</small><small class="status-badge status-AMBER">Mixed: 391</small><small class="status-badge status-BLACK">Missing: 67,649</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
 <a href="diatom_rbcl.html" class="text-decoration-none">
@@ -117,8 +117,8 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">RBCL (Diat.barcode)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">2,332 species</span><span class="text-success fw-bold">380 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:16.3%;background:#198754"></div><div class="mini-bar-segment" style="width:0.2%;background:#ffc107"></div><div class="mini-bar-segment" style="width:5.7%;background:#dc3545"></div><div class="mini-bar-segment" style="width:1.3%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:76.5%;background:#343a40"></div></div>
-<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">OK - Valid: 380</small><small class="status-badge status-BLUE">OK - Synonym: 30</small><small class="status-badge status-AMBER">OK - Valid + Synonym: 5</small><small class="status-badge status-RED">ID Conflict: 133</small><small class="status-badge status-BLACK">Missing: 1,784</small></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:16.3%;background:#198754"></div><div class="mini-bar-segment" style="width:1.3%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.2%;background:#ffc107"></div><div class="mini-bar-segment" style="width:5.7%;background:#dc3545"></div><div class="mini-bar-segment" style="width:76.5%;background:#343a40"></div></div>
+<div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Valid: 380</small><small class="status-badge status-BLUE">Synonym: 30</small><small class="status-badge status-AMBER">Mixed: 5</small><small class="status-badge status-RED">Conflict: 133</small><small class="status-badge status-BLACK">Missing: 1,784</small></div>
 </div></div></a></div>
 </div>
 <h3 class="mb-4">Genome Datasets</h3>
@@ -129,7 +129,7 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <div class="card-header">GENOME (DTOL)</div>
 <div class="card-body">
 <div class="d-flex justify-content-between mb-2"><span class="text-muted">79,085 species</span><span class="text-success fw-bold">1,302 covered</span></div>
-<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:1.6%;background:#198754"></div><div class="mini-bar-segment" style="width:0.5%;background:#ffc107"></div><div class="mini-bar-segment" style="width:6.8%;background:#dc3545"></div><div class="mini-bar-segment" style="width:1.5%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:89.6%;background:#343a40"></div></div>
+<div class="mini-bar mb-3"><div class="mini-bar-segment" style="width:1.6%;background:#198754"></div><div class="mini-bar-segment" style="width:1.5%;background:#0d6efd"></div><div class="mini-bar-segment" style="width:0.5%;background:#ffc107"></div><div class="mini-bar-segment" style="width:6.8%;background:#dc3545"></div><div class="mini-bar-segment" style="width:89.6%;background:#343a40"></div></div>
 <div class="d-flex flex-wrap gap-1"><small class="status-badge status-GREEN">Completed: 1,302</small><small class="status-badge status-BLUE">Assembled: 1,164</small><small class="status-badge status-AMBER">Sequenced: 421</small><small class="status-badge status-RED">Sampled: 5,367</small><small class="status-badge status-BLACK">Missing: 70,831</small></div>
 </div></div></a></div>
 <div class="col-md-6 col-lg-4">
@@ -147,7 +147,7 @@ footer .footer-logo{height:60px;filter:brightness(0) invert(1);}
 <footer><div class="container text-center">
 <img src="assets/images/ukbol-text-logo-clear.png" alt="UKBOL" class="footer-logo mb-2">
 <p class="mb-1">UK Barcode of Life (UKBOL)</p>
-<p class="small mb-0">Part of <a href="https://ibol.org/" target="_blank">International Barcode of Life</a> | Data generated 2026-03-03</p>
+<p class="small mb-0">Part of <a href="https://ibol.org/" target="_blank">International Barcode of Life</a> | Data generated 2026-03-11</p>
 <div class="mt-4">
 <h6 class="text-light mb-2">Reference Database Versions</h6>
 <table class="table table-sm table-dark table-striped" style="max-width:600px;margin:0 auto;font-size:.85rem;">
