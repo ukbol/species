@@ -1,0 +1,11 @@
+stable_id	display_name	gene_key	input_pattern	dataset_type	default_filter
+bold_coi	COI (BOLD)	coi	????-??-??_bold_coi_gap_analysis.tsv	gene	kingdom=Animalia
+ncbi_rbcl	rbcL (NCBI)	rbcl	????-??-??_ncbi_rbcl_gap_analysis.tsv	gene	kingdom=Plantae
+bold_rbcl	rbcL (BOLD)	rbcl	????-??-??_bold_rbcl_gap_analysis.tsv	gene	kingdom=Plantae
+merged_rbcl	rbcL (BOLD + NCBI)	rbcl	????-??-??_bold_ncbi_rbcl_gap_analysis.tsv	gene	kingdom=Plantae
+diatom_rbcl	rbcL (Diat.barcode)	rbcl	????-??-??_diatom_rbcl_gap_analysis.tsv	gene	class=Bacillariophyceae
+unite_its	ITS (UNITE)	its	????-??-??_unite_its_gap_analysis.tsv	gene	kingdom=Fungi
+midori_12s	12S (MIDORI2)	12s	????-??-??_midori_12s_gap_analysis.tsv	gene	phylum=Chordata
+midori_16s	16S (MIDORI2)	16s	????-??-??_midori_16s_gap_analysis.tsv	gene	
+dtol_genome	Genome (DToL)	genome	????-??-??_dtol_genome_gap_analysis.tsv	dtol	
+ena_mitogenome	Mitogenome (ENA)	mitogenome	????-??-??_ena_mitogenome_gap_analysis.tsv	mitogenome	

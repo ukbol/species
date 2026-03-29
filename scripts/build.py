@@ -23,6 +23,7 @@ from pathlib import Path
 from datetime import datetime
 import argparse
 import re
+from fnmatch import fnmatch
 
 STATUS_COLORS = {
     'GREEN': '#198754', 'AMBER': '#ffc107', 'ORANGE': '#fd7e14',
@@ -54,21 +55,10 @@ MITOGENOME_STATUS_LABELS = {
     'BLACK': 'Missing',
 }
 
-# Default taxonomy filters for specific gene regions
-GENE_DEFAULT_FILTERS = {
-    'diatom': {'class': 'Bacillariophyceae'},
-    'coi': {'kingdom': 'Animalia'},
-    'rbcl': {'kingdom': 'Plantae'},
-    'its': {'kingdom': 'Fungi'},
-    'unite': {'kingdom': 'Fungi'},
-    '12s': {'phylum': 'Chordata'},
-    'mitogenome': {},  # No default filter - spans all kingdoms
-}
-
-# Display name overrides for datasets where the filename convention doesn't produce the right label
-DISPLAY_NAME_OVERRIDES = {
-    'diatom_rbcl': 'RBCL (Diat.barcode)',
-}
+# Dataset metadata is loaded from metadata/datasets.tsv at runtime.
+# That file controls: stable_id, display_name, gene_key, input_pattern,
+# dataset_type, and default_filter for each dataset.
+# Add new datasets there rather than editing this script.
 
 JNCC_PREFIXES = ['jncc_', 'pantheon_']
 
@@ -102,6 +92,55 @@ def get_gene_name(filepath):
         gene = '_'.join(parts[1:]).upper()
         return f"{gene} ({database})"
     return name.upper()
+
+
+def load_dataset_registry(script_dir):
+    """Load datasets.tsv from the metadata directory.
+
+    Returns a list of dicts, one per row, with keys:
+      stable_id, display_name, gene_key, input_pattern, dataset_type, default_filter
+    Returns an empty list if the file is missing (full fallback mode).
+    """
+    registry_path = script_dir / 'metadata' / 'datasets.tsv'
+    if not registry_path.exists():
+        print("  [WARN] metadata/datasets.tsv not found — using filename fallback for all datasets")
+        return []
+    registry = []
+    with open(registry_path, encoding='utf-8') as f:
+        reader = __import__('csv').DictReader(f, delimiter='\t')
+        for row in reader:
+            registry.append(row)
+    print(f"  Loaded {len(registry)} entries from metadata/datasets.tsv")
+    return registry
+
+
+def match_dataset(filename, registry):
+    """Match a TSV filename against the registry using glob patterns.
+
+    Returns the matching registry row dict, or None if no match.
+    First match wins (registry row order matters for overlapping patterns).
+    """
+    for row in registry:
+        pattern = row.get('input_pattern', '').strip()
+        if pattern and fnmatch(filename, pattern):
+            return row
+    return None
+
+
+def parse_default_filter(filter_str):
+    """Parse a default_filter string like 'kingdom=Plantae' or
+    'kingdom=Plantae;phylum=Tracheophyta' into a dict.
+    Returns an empty dict for blank/missing values.
+    """
+    result = {}
+    if not filter_str or not filter_str.strip():
+        return result
+    for token in filter_str.strip().split(';'):
+        token = token.strip()
+        if '=' in token:
+            k, v = token.split('=', 1)
+            result[k.strip()] = v.strip()
+    return result
 
 
 def get_jncc_columns(df):
@@ -402,19 +441,28 @@ footer .footer-logo{{height:60px;filter:brightness(0) invert(1);}}
 
 
 def get_default_filter_for_gene(gene_name):
-    """Determine default taxonomy filter based on gene name."""
+    """Fallback default filter when no metadata registry entry matches.
+    Infers a basic filter from the gene name string.
+    Prefer registering datasets in metadata/datasets.tsv over extending this.
+    """
     gene_lower = gene_name.lower()
-    for gene_key, filters in GENE_DEFAULT_FILTERS.items():
-        if gene_key in gene_lower:
-            return filters
+    if 'coi' in gene_lower:
+        return {'kingdom': 'Animalia'}
+    if 'rbcl' in gene_lower:
+        return {'kingdom': 'Plantae'}
+    if 'its' in gene_lower or 'unite' in gene_lower:
+        return {'kingdom': 'Fungi'}
+    if '12s' in gene_lower:
+        return {'phylum': 'Chordata'}
     return {}
 
 
-def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_labels=None):
+def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_labels=None, default_filter=None):
     if status_labels is None:
         status_labels = STATUS_LABELS
+    if default_filter is None:
+        default_filter = get_default_filter_for_gene(gene_name)
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
-    default_filters = get_default_filter_for_gene(gene_name)
 
     # Build status filter buttons from labels
     btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'ORANGE': 'btn-outline-orange', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
@@ -573,7 +621,7 @@ const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
 const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","ORANGE":"#fd7e14","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
 const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
-const DEFAULT_FILTERS = ''' + json.dumps(default_filters) + ''';
+const DEFAULT_FILTERS = ''' + json.dumps(default_filter) + ''';
 const TABLE_COLUMNS = ''' + json.dumps(table_columns) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
 const TSV_FILE = 'data/''' + gene_name + '''.tsv';
@@ -1013,6 +1061,9 @@ def main():
             shutil.copy2(img, assets_dst / img.name)
         print(f"Copied logo assets to {assets_dst}")
 
+    # Load dataset registry from metadata/datasets.tsv
+    registry = load_dataset_registry(script_dir)
+
     tsv_files = list(data_dir.glob('*.tsv'))
     if not tsv_files:
         print(f"\n[ERROR] No TSV files found in {data_dir}")
@@ -1025,14 +1076,26 @@ def main():
     
     for tsv_path in sorted(tsv_files):
         filename = tsv_path.name
-        # Strip date prefix and _gap_analysis suffix for stable output filenames
-        gene_name = re.sub(r'^\d{4}-\d{2}-\d{2}_', '', tsv_path.stem)
-        gene_name = re.sub(r'_gap_analysis$', '', gene_name)
-        display_name = DISPLAY_NAME_OVERRIDES.get(gene_name, get_gene_name(str(tsv_path)))
 
-        print(f"\nProcessing: {filename}")
+        # --- Resolve identity from registry or fall back to filename parsing ---
+        reg = match_dataset(filename, registry)
+        if reg:
+            gene_name    = reg['stable_id'].strip()
+            display_name = reg['display_name'].strip()
+            dataset_type_key = reg.get('dataset_type', '').strip().lower()
+            default_filter   = parse_default_filter(reg.get('default_filter', ''))
+            print(f"\nProcessing: {filename}  [registry: {gene_name}]")
+        else:
+            # Fallback: derive from filename as before
+            gene_name = re.sub(r'^\d{4}-\d{2}-\d{2}_', '', tsv_path.stem)
+            gene_name = re.sub(r'_gap_analysis$', '', gene_name)
+            display_name = get_gene_name(str(tsv_path))
+            dataset_type_key = ''
+            default_filter = {}
+            print(f"\nProcessing: {filename}  [fallback naming — consider adding to metadata/datasets.tsv]")
+
         print(f"  Display name: {display_name}")
-        
+
         try:
             df = pd.read_csv(tsv_path, sep='\t', encoding='utf-8', low_memory=False)
         except UnicodeDecodeError:
@@ -1040,9 +1103,14 @@ def main():
         
         df = df.fillna('')
 
-        # Detect dataset type
-        is_dtol = 'dtol_status' in df.columns
-        is_mitogenome = 'mitogenome_count' in df.columns
+        # Detect dataset type — registry value takes precedence; fall back to column sniffing
+        if dataset_type_key == 'dtol':
+            is_dtol, is_mitogenome = True, False
+        elif dataset_type_key == 'mitogenome':
+            is_dtol, is_mitogenome = False, True
+        else:
+            is_dtol      = 'dtol_status' in df.columns
+            is_mitogenome = 'mitogenome_count' in df.columns
 
         if is_dtol:
             status_labels = DTOL_STATUS_LABELS
@@ -1051,13 +1119,18 @@ def main():
         else:
             status_labels = STATUS_LABELS
 
-        # Keep reference for cross-gene stats (exclude DToL and mitogenome - different coverage concepts)
+        # If no default_filter from registry, use keyword fallback
+        if not default_filter:
+            default_filter = get_default_filter_for_gene(gene_name)
+
+        # Keep reference for cross-gene stats (exclude DToL and mitogenome — different coverage concepts)
         if not is_dtol and not is_mitogenome:
             all_dataframes.append(df)
 
         dataset_type = 'DToL genome' if is_dtol else ('ENA mitogenome' if is_mitogenome else 'gene')
         print(f"  Rows: {len(df):,}")
         print(f"  Dataset type: {dataset_type}")
+        print(f"  Default filter: {default_filter}")
         
         jncc_columns = get_jncc_columns(df)
         print(f"  JNCC columns with data: {len(jncc_columns)}")
@@ -1087,7 +1160,7 @@ def main():
             print(f"  - TSV already in output directory")
         
         # Generate HTML
-        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_labels)
+        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_labels, default_filter)
         
         genes_data.append({
             'filename': f"{gene_name}.html",
@@ -1110,6 +1183,14 @@ def main():
     
     print("\nGenerating index page...")
     
+    # Sort datasets alphabetically by stable_id so gene variants cluster together
+    # (e.g. bold_coi, merged_coi, ncbi_coi) with genome datasets naturally at the end
+    gene_datasets  = sorted([g for g in genes_data if g['dataset_type'] == 'gene'],
+                             key=lambda x: x['filename'])
+    other_datasets = sorted([g for g in genes_data if g['dataset_type'] != 'gene'],
+                             key=lambda x: x['filename'])
+    genes_data_sorted = gene_datasets + other_datasets
+    
     # Compute cross-gene summary statistics
     cross_gene_stats = compute_cross_gene_stats(all_dataframes)
     print(f"  Cross-gene stats: {cross_gene_stats}")
@@ -1124,7 +1205,7 @@ def main():
         except Exception as e:
             print(f"  Warning: Could not read dataset metadata: {e}")
     
-    generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_gene_stats, dataset_metadata)
+    generate_index_html(genes_data_sorted, zenodo_links, output_dir, build_date, cross_gene_stats, dataset_metadata)
     
     print(f"\n[OK] Build complete!")
     print(f"   Output: {output_dir}")
