@@ -43,10 +43,16 @@ table.dataTable th{font-size:.75rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
 .btn-outline-orange{color:#fd7e14;border-color:#fd7e14;}.btn-outline-orange:hover,.btn-outline-orange.active{color:#fff;background-color:#fd7e14;border-color:#fd7e14;}
-.status-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
-@media(hover:none){.status-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
+.btn-bags-A{color:#198754;border-color:#198754;}.btn-bags-A:hover,.btn-bags-A.active{color:#fff;background-color:#198754;border-color:#198754;}
+.btn-bags-B{color:#2e9e6b;border-color:#2e9e6b;}.btn-bags-B:hover,.btn-bags-B.active{color:#fff;background-color:#2e9e6b;border-color:#2e9e6b;}
+.btn-bags-D{color:#4a9e7a;border-color:#7ecba3;}.btn-bags-D:hover,.btn-bags-D.active{color:#fff;background-color:#7ecba3;border-color:#7ecba3;}
+.btn-bags-C{color:#0d6efd;border-color:#0d6efd;}.btn-bags-C:hover,.btn-bags-C.active{color:#fff;background-color:#0d6efd;border-color:#0d6efd;}
+.btn-bags-E{color:#dc3545;border-color:#dc3545;}.btn-bags-E:hover,.btn-bags-E.active{color:#fff;background-color:#dc3545;border-color:#dc3545;}
+.btn-bags-F{color:#343a40;border-color:#343a40;}.btn-bags-F:hover,.btn-bags-F.active{color:#fff;background-color:#343a40;border-color:#343a40;}
+.status-btn,.bags-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+@media(hover:none){.status-btn:hover,.bags-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
-@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn{padding:.5rem .75rem;margin:.25rem;}}
+@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn,.bags-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
 </head>
 <body>
@@ -79,6 +85,16 @@ table.dataTable th{font-size:.75rem;}
 <div class="d-flex flex-wrap gap-1">
 <button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">Has Mitogenome</button>
 <button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">Missing</button>
+</div></div>
+<div class="mb-3">
+<label class="form-label fw-bold">BAGS Grade</label>
+<div class="d-flex flex-wrap gap-1">
+<button class="btn btn-sm btn-bags-A bags-btn active" data-grade="A">A</button>
+<button class="btn btn-sm btn-bags-B bags-btn active" data-grade="B">B</button>
+<button class="btn btn-sm btn-bags-C bags-btn active" data-grade="C">C</button>
+<button class="btn btn-sm btn-bags-D bags-btn active" data-grade="D">D</button>
+<button class="btn btn-sm btn-bags-E bags-btn active" data-grade="E">E</button>
+<button class="btn btn-sm btn-bags-F bags-btn active" data-grade="F">F</button>
 </div></div>
 <div class="mb-3">
 <label class="form-label fw-bold">Habitat</label>
@@ -329,6 +345,7 @@ function applyFilters() {
         if (filters.order && row.order !== filters.order) return false;
         if (filters.family && row.family !== filters.family) return false;
         if (filters.statuses.length > 0 && !filters.statuses.includes(row.species_status)) return false;
+        if (filters.grades.length > 0 && filters.grades.length < 6 && row.bags_grade && !filters.grades.includes(row.bags_grade)) return false;
         if (filters.habitats.length > 0) {
             const hasHabitat = (filters.habitats.includes('marine') && row.marine_flag === 'Y') || (filters.habitats.includes('freshwater') && row.freshwater === 'Y') || (filters.habitats.includes('terrestrial') && row.terrestrial_freshwater_flag === 'Y') || (filters.habitats.includes('freshwater_ukceh') && row.ukceh_freshwater_list === 'Y');
             if (!hasHabitat) return false;
@@ -357,8 +374,9 @@ function applyFilters() {
     updateUrl(filters);
 }
 function collectFilters() {
-    const activeStatuses = [], activeHabitats = [], activeAssemblages = [];
+    const activeStatuses = [], activeHabitats = [], activeAssemblages = [], activeGrades = [];
     document.querySelectorAll('.status-btn.active').forEach(btn => activeStatuses.push(btn.dataset.status));
+    document.querySelectorAll('.bags-btn.active').forEach(btn => activeGrades.push(btn.dataset.grade));
     document.querySelectorAll('.habitat-filter:checked').forEach(cb => activeHabitats.push(cb.value));
     document.querySelectorAll('.assemblage-filter:checked').forEach(cb => activeAssemblages.push(cb.value));
     return {
@@ -368,6 +386,7 @@ function collectFilters() {
         order:document.getElementById('filterOrder').value,
         family:document.getElementById('filterFamily').value,
         statuses:activeStatuses,
+        grades:activeGrades,
         habitats:activeHabitats,
         assemblages:activeAssemblages,
         pantheonAssemblage:document.getElementById('filterPantheonAssemblage').value,
@@ -390,6 +409,14 @@ function updateActiveFiltersDisplay(filters) {
         const excludedStatuses = allStatuses.filter(s => !filters.statuses.includes(s));
         excludedStatuses.forEach(status => {
             addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
+        });
+    }
+    // Show BAGS grade filters when not all are selected
+    const allGrades = ['A','B','C','D','E','F'];
+    if (filters.grades.length > 0 && filters.grades.length < allGrades.length) {
+        const excludedGrades = allGrades.filter(g => !filters.grades.includes(g));
+        excludedGrades.forEach(grade => {
+            addTag('Hiding Grade', grade, `document.querySelector('.bags-btn[data-grade="${grade}"]').classList.add('active');applyFilters()`);
         });
     }
     const habitatLabels = {'marine':'Marine (UKSI)','freshwater':'Freshwater (UKSI)','terrestrial':'Terrestrial (UKSI)','freshwater_ukceh':'Freshwater (UKCEH)'};
@@ -421,6 +448,7 @@ function updateUrl(filters) {
     if(filters.order)params.set('order',filters.order);
     if(filters.family)params.set('family',filters.family);
     if(filters.statuses.length<5)params.set('status',filters.statuses.join(','));
+    if(filters.grades.length>0&&filters.grades.length<6)params.set('bags_grade',filters.grades.join(','));
     if(filters.habitats.length>0)params.set('habitat',filters.habitats.join(','));
     if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
     if(filters.pantheonAssemblage)params.set('pantheon_assemblage',filters.pantheonAssemblage);
@@ -451,6 +479,7 @@ function loadFiltersFromUrl() {
     }
     if(params.get('family'))document.getElementById('filterFamily').value=params.get('family');
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
+    if(params.get('bags_grade')){const grades=params.get('bags_grade').split(',');document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.toggle('active',grades.includes(btn.dataset.grade)));}
     if(params.get('habitat')){const habitatIdMap={'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};params.get('habitat').split(',').forEach(h=>{const id=habitatIdMap[h];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('pantheon_assemblage'))document.getElementById('filterPantheonAssemblage').value=params.get('pantheon_assemblage');
@@ -505,6 +534,7 @@ $(document).ready(function() {
         rebuildSelect('filterOrder', getUniqueValues(DATA, 'order'), 'All Orders');
         rebuildSelect('filterFamily', getUniqueValues(DATA, 'family'), 'All Families');
         document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
+        document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.add('active'));
         document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
         document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.checked=false);
         document.getElementById('filterPantheonAssemblage').value='';
@@ -519,6 +549,15 @@ $(document).ready(function() {
             applyFilters();
         };
         btn.addEventListener('click', toggleStatus);
+    });
+    // BAGS grade button handlers
+    document.querySelectorAll('.bags-btn').forEach(btn=>{
+        const toggleGrade = (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            applyFilters();
+        };
+        btn.addEventListener('click', toggleGrade);
     });
     // Habitat and protection filters - auto-apply on change
     document.querySelectorAll('.habitat-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
