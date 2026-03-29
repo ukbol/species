@@ -110,7 +110,7 @@ table.dataTable th{font-size:.75rem;}
 <div class="mb-3">
 <label class="form-label fw-bold">Assemblage</label>
 <div class="form-check"><input class="form-check-input assemblage-filter" type="checkbox" value="freshbase" id="assemblageFreshbase"><label class="form-check-label" for="assemblageFreshbase">Freshwater macroinverts</label></div>
-<select id="filterPantheonAssemblage" class="form-select form-select-sm mt-2"><option value="">All PANTHEON assemblages</option></select>
+<select id="filterPantheonAssemblage" class="form-select form-select-sm mt-2"><option value="">All species</option><option value="__any__">Any PANTHEON assemblage</option></select>
 </div>
 <div class="mb-3">
 <label class="form-label fw-bold">Conservation Designations</label>
@@ -358,7 +358,9 @@ function applyFilters() {
             const hasAssemblage = (filters.assemblages.includes('freshbase') && row.freshbase === 'Y');
             if (!hasAssemblage) return false;
         }
-        if (filters.pantheonAssemblage) {
+        if (filters.pantheonAssemblage === '__any__') {
+            if (!(row.pantheon_specific_assemblage_type || '').trim()) return false;
+        } else if (filters.pantheonAssemblage) {
             const sat = row.pantheon_specific_assemblage_type || '';
             const codes = sat.split(',').map(c => c.trim());
             if (!codes.includes(filters.pantheonAssemblage)) return false;
@@ -429,7 +431,10 @@ function updateActiveFiltersDisplay(filters) {
     const assemblageLabels = {'freshbase':'Freshwater macroinverts'};
     const assemblageIds = {'freshbase':'assemblageFreshbase'};
     filters.assemblages.forEach(a => addTag('Assemblage',assemblageLabels[a]||a,`document.getElementById('${assemblageIds[a]}').checked=false;applyFilters()`));
-    if (filters.pantheonAssemblage) addTag('PANTHEON',filters.pantheonAssemblage,"document.getElementById('filterPantheonAssemblage').value='';applyFilters()");
+    if (filters.pantheonAssemblage) {
+        const pantheonLabel = filters.pantheonAssemblage === '__any__' ? 'Any assemblage' : filters.pantheonAssemblage;
+        addTag('PANTHEON', pantheonLabel, "document.getElementById('filterPantheonAssemblage').value='';applyFilters()");
+    }
     if (filters.protected) addTag('Filter','Conservation designations',"document.getElementById('filterProtected').checked=false;applyFilters()");
     if (filters.gbRecords) {const label=filters.gbRecords==='with'?'With UK records':'Without UK records';addTag('UK Records',label,"document.getElementById('filterGbRecords').value='';applyFilters()");}
 }
