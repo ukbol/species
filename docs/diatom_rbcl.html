@@ -22,7 +22,9 @@ h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
 .chart-container{overflow:hidden;}
 .filter-panel h5{margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e9ecef;}
 .status-badge{display:inline-block;padding:.15em .45em;font-size:.7rem;font-weight:600;border-radius:4px;color:#fff;white-space:nowrap;}
-.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-ORANGE{background:var(--ukbol-orange);}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
+.status-valid_name{background:#198754;color:#fff;}.btn-status-valid_name{color:#198754;border-color:#198754;}.btn-status-valid_name:hover,.btn-status-valid_name.active{color:#fff;background-color:#198754;border-color:#198754;}.status-synonym_only{background:#0d6efd;color:#fff;}.btn-status-synonym_only{color:#0d6efd;border-color:#0d6efd;}.btn-status-synonym_only:hover,.btn-status-synonym_only.active{color:#fff;background-color:#0d6efd;border-color:#0d6efd;}.status-valid_and_synonym{background:#ffc107;color:#000;}.btn-status-valid_and_synonym{color:#ffc107;border-color:#ffc107;}.btn-status-valid_and_synonym:hover,.btn-status-valid_and_synonym.active{color:#000;background-color:#ffc107;border-color:#ffc107;}.status-shared_bin_interim{background:#fd7e14;color:#fff;}.btn-status-shared_bin_interim{color:#fd7e14;border-color:#fd7e14;}.btn-status-shared_bin_interim:hover,.btn-status-shared_bin_interim.active{color:#fff;background-color:#fd7e14;border-color:#fd7e14;}.status-shared_bin_species{background:#dc3545;color:#fff;}.btn-status-shared_bin_species{color:#dc3545;border-color:#dc3545;}.btn-status-shared_bin_species:hover,.btn-status-shared_bin_species.active{color:#fff;background-color:#dc3545;border-color:#dc3545;}.status-no_records{background:#343a40;color:#fff;}.btn-status-no_records{color:#343a40;border-color:#343a40;}.btn-status-no_records:hover,.btn-status-no_records.active{color:#fff;background-color:#343a40;border-color:#343a40;}.status-annotation_complete{background:#198754;color:#fff;}.btn-status-annotation_complete{color:#198754;border-color:#198754;}.btn-status-annotation_complete:hover,.btn-status-annotation_complete.active{color:#fff;background-color:#198754;border-color:#198754;}.status-assembly_submitted{background:#0d6efd;color:#fff;}.btn-status-assembly_submitted{color:#0d6efd;border-color:#0d6efd;}.btn-status-assembly_submitted:hover,.btn-status-assembly_submitted.active{color:#fff;background-color:#0d6efd;border-color:#0d6efd;}.status-raw_data_submitted{background:#ffc107;color:#000;}.btn-status-raw_data_submitted{color:#ffc107;border-color:#ffc107;}.btn-status-raw_data_submitted:hover,.btn-status-raw_data_submitted.active{color:#000;background-color:#ffc107;border-color:#ffc107;}.status-biosample_submitted{background:#dc3545;color:#fff;}.btn-status-biosample_submitted{color:#dc3545;border-color:#dc3545;}.btn-status-biosample_submitted:hover,.btn-status-biosample_submitted.active{color:#fff;background-color:#dc3545;border-color:#dc3545;}.status-not_in_dtol{background:#343a40;color:#fff;}.btn-status-not_in_dtol{color:#343a40;border-color:#343a40;}.btn-status-not_in_dtol:hover,.btn-status-not_in_dtol.active{color:#fff;background-color:#343a40;border-color:#343a40;}.status-mitogenome_present{background:#198754;color:#fff;}.btn-status-mitogenome_present{color:#198754;border-color:#198754;}.btn-status-mitogenome_present:hover,.btn-status-mitogenome_present.active{color:#fff;background-color:#198754;border-color:#198754;}.status-no_mitogenome{background:#343a40;color:#fff;}.btn-status-no_mitogenome{color:#343a40;border-color:#343a40;}.btn-status-no_mitogenome:hover,.btn-status-no_mitogenome.active{color:#fff;background-color:#343a40;border-color:#343a40;}
+.status-key summary{cursor:pointer;color:var(--ukbol-primary-mid);font-size:.85rem;}
+.status-key{font-size:.8rem;}
 .filter-tag{display:inline-flex;align-items:center;gap:.25rem;background:#e7f1ff;color:#0d6efd;padding:.25rem .75rem;border-radius:20px;font-size:.85rem;margin:.25rem;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
 #activeFilters:empty::before{content:"No filters active";color:#6c757d;font-style:italic;}
@@ -42,17 +44,16 @@ table.dataTable th{font-size:.75rem;}
 .data-link a{text-decoration:none;margin-right:0.25rem;font-size:.85rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
-.btn-outline-orange{color:#fd7e14;border-color:#fd7e14;}.btn-outline-orange:hover,.btn-outline-orange.active{color:#fff;background-color:#fd7e14;border-color:#fd7e14;}
 .btn-bags-A{color:#198754;border-color:#198754;}.btn-bags-A:hover,.btn-bags-A.active{color:#fff;background-color:#198754;border-color:#198754;}
 .btn-bags-B{color:#2e9e6b;border-color:#2e9e6b;}.btn-bags-B:hover,.btn-bags-B.active{color:#fff;background-color:#2e9e6b;border-color:#2e9e6b;}
 .btn-bags-D{color:#4a9e7a;border-color:#7ecba3;}.btn-bags-D:hover,.btn-bags-D.active{color:#fff;background-color:#7ecba3;border-color:#7ecba3;}
 .btn-bags-C{color:#0d6efd;border-color:#0d6efd;}.btn-bags-C:hover,.btn-bags-C.active{color:#fff;background-color:#0d6efd;border-color:#0d6efd;}
 .btn-bags-E{color:#dc3545;border-color:#dc3545;}.btn-bags-E:hover,.btn-bags-E.active{color:#fff;background-color:#dc3545;border-color:#dc3545;}
 .btn-bags-F{color:#343a40;border-color:#343a40;}.btn-bags-F:hover,.btn-bags-F.active{color:#fff;background-color:#343a40;border-color:#343a40;}
-.status-btn,.bags-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
-@media(hover:none){.status-btn:hover,.bags-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
+.status-btn,.bags-btn,.issue-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+@media(hover:none){.status-btn:hover,.bags-btn:hover,.issue-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
-@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn,.bags-btn{padding:.5rem .75rem;margin:.25rem;}}
+@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn,.bags-btn,.issue-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
 </head>
 <body>
@@ -64,7 +65,7 @@ table.dataTable th{font-size:.75rem;}
 </div>
 <div class="d-flex align-items-center gap-3">
 <span class="dataset-name">rbcL (Diat.barcode)</span>
-<span class="dataset-meta">2,332 species | Updated 2026-09-16</span>
+<span class="dataset-meta">2,332 species | Updated 2026-09-24</span>
 </div>
 </div></nav>
 <div class="container-fluid px-4">
@@ -81,15 +82,31 @@ table.dataTable th{font-size:.75rem;}
 <select id="filterFamily" class="form-select form-select-sm"><option value="">All Families</option></select>
 </div>
 <div class="mb-3">
-<label class="form-label fw-bold">Coverage Status</label>
+<label class="form-label fw-bold">Status</label>
 <div class="d-flex flex-wrap gap-1">
-<button class="btn btn-sm btn-outline-success status-btn active" data-status="GREEN">Valid</button>
-<button class="btn btn-sm btn-outline-primary status-btn active" data-status="BLUE">Synonym</button>
-<button class="btn btn-sm btn-outline-warning status-btn active" data-status="AMBER">Mixed</button>
-<button class="btn btn-sm btn-outline-orange status-btn active" data-status="ORANGE">Interim ID</button>
-<button class="btn btn-sm btn-outline-danger status-btn active" data-status="RED">Conflict</button>
-<button class="btn btn-sm btn-outline-dark status-btn active" data-status="BLACK">Missing</button>
-</div></div>
+<button class="btn btn-sm btn-status-valid_name status-btn active" data-status="valid_name" title="Records only under the accepted (valid) name, with no BIN/OTU shared with other names">Valid name</button>
+<button class="btn btn-sm btn-status-synonym_only status-btn active" data-status="synonym_only" title="Records only under synonym(s); the valid name is absent from the reference database">Synonym only</button>
+<button class="btn btn-sm btn-status-valid_and_synonym status-btn active" data-status="valid_and_synonym" title="Records under both the valid name and synonym(s); names need consolidating">Valid + synonym</button>
+<button class="btn btn-sm btn-status-shared_bin_interim status-btn active" data-status="shared_bin_interim" title="BIN/OTU shared only with interim or placeholder names (e.g. sp., cf., numeric codes)">Shared BIN (interim)</button>
+<button class="btn btn-sm btn-status-shared_bin_species status-btn active" data-status="shared_bin_species" title="BIN/OTU shared with at least one other formally named species; possible misidentification or taxonomic conflict">Shared BIN (species)</button>
+<button class="btn btn-sm btn-status-no_records status-btn active" data-status="no_records" title="No records under the valid name or any synonym">No records</button>
+</div>
+<details class="status-key mt-2"><summary>What do the statuses mean?</summary><div class="mt-2"><div class="mb-1"><span class="status-badge status-valid_name">Valid name</span> Records only under the accepted (valid) name, with no BIN/OTU shared with other names</div><div class="mb-1"><span class="status-badge status-synonym_only">Synonym only</span> Records only under synonym(s); the valid name is absent from the reference database</div><div class="mb-1"><span class="status-badge status-valid_and_synonym">Valid + synonym</span> Records under both the valid name and synonym(s); names need consolidating</div><div class="mb-1"><span class="status-badge status-shared_bin_interim">Shared BIN (interim)</span> BIN/OTU shared only with interim or placeholder names (e.g. sp., cf., numeric codes)</div><div class="mb-1"><span class="status-badge status-shared_bin_species">Shared BIN (species)</span> BIN/OTU shared with at least one other formally named species; possible misidentification or taxonomic conflict</div><div class="mb-1"><span class="status-badge status-no_records">No records</span> No records under the valid name or any synonym</div></div></details>
+</div>
+<div class="mb-3">
+<label class="form-label fw-bold">Record Issues</label>
+<div class="small text-muted mb-1">Show species with any selected issue</div>
+<div class="d-flex flex-wrap gap-1">
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="shared_bin_species" title="A BIN/OTU is shared with another formally named species">Shares BIN (species)</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="shared_bin_interim" title="A BIN/OTU is shared with an interim or placeholder name">Shares BIN (interim)</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="synonym_records" title="Some records are under a synonym rather than the valid name">Synonym records</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="valid_name_absent" title="Records exist, but none under the valid name">Valid name absent</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="split_bins" title="Records fall in more than one BIN/OTU">Split BINs</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="no_cluster" title="Records exist, but none has a BIN/OTU assigned">No BIN/OTU</button>
+<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="few_records" title="Fewer than 3 records">Few records</button>
+</div>
+<details class="status-key mt-2"><summary>What do the issues mean?</summary><div class="mt-2"><div class="mb-1"><strong>Shares BIN (species)</strong>: A BIN/OTU is shared with another formally named species</div><div class="mb-1"><strong>Shares BIN (interim)</strong>: A BIN/OTU is shared with an interim or placeholder name</div><div class="mb-1"><strong>Synonym records</strong>: Some records are under a synonym rather than the valid name</div><div class="mb-1"><strong>Valid name absent</strong>: Records exist, but none under the valid name</div><div class="mb-1"><strong>Split BINs</strong>: Records fall in more than one BIN/OTU</div><div class="mb-1"><strong>No BIN/OTU</strong>: Records exist, but none has a BIN/OTU assigned</div><div class="mb-1"><strong>Few records</strong>: Fewer than 3 records</div></div></details>
+</div>
 <div class="mb-3">
 <label class="form-label fw-bold">BAGS Grade</label>
 <div class="d-flex flex-wrap gap-1">
@@ -152,12 +169,14 @@ table.dataTable th{font-size:.75rem;}
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <script>
-const FILTER_OPTIONS = {"kingdom": ["Chromista"], "phylum_division": [], "class": ["Bacillariophyceae"], "order": ["Achnanthales", "Asterolamprales", "Aulacoseirales", "Bacillariales", "Biddulphiales", "Chaetocerotanae incertae sedis", "Corethrales", "Coscinodiscales", "Cymatosirales", "Cymbellales", "Ethmodiscales", "Eunotiales", "Fragilariales", "Hemiaulales", "Leptocylindrales", "Licmophorales", "Lithodesmiales", "Lyrellales", "Mastogloiales", "Melosirales", "Naviculales", "Orthoseirales", "Paraliales", "Rhabdonematales", "Rhaponeidales", "Rhizosoleniales", "Rhopalodiales", "Striatellales", "Surirellales", "Tabellariales", "Thalassionematales", "Thalassiophysales", "Thalassiosirales", "Toxariales", "Triceratiales"], "family": ["Acanthocerataceae", "Achnanthaceae", "Achnanthidiaceae", "Amphipleuraceae", "Anomoeoneidaceae", "Ardissoneaceae", "Asterolampraceae", "Attheyaceae", "Aulacoseiraceae", "Bacillariaceae", "Bellerocheaceae", "Berkeleyaceae", "Biddulphiaceae", "Brachysiraceae", "Catenulaceae", "Cavinulaceae", "Chaetocerotaceae", "Cocconeidaceae", "Corethraceae", "Coscinodiscaceae", "Cosmioneidaceae", "Cymatosiraceae", "Cymbellaceae", "Diadesmidaceae", "Diploneidaceae", "Entomoneidaceae", "Ethmodiscaceae", "Eunotiaceae", "Fragilariaceae", "Gomphonemataceae", "Heliopeltaceae", "Hemiaulaceae", "Hemidiscaceae", "Hyalodiscaceae", "Lauderiaceae", "Leptocylindraceae", "Licmophoraceae", "Lithodesmiaceae", "Lyrellaceae", "Mastogloiaceae", "Melosiraceae", "Naviculaceae", "Naviculales incertae sedis", "Neidiaceae", "Orthoseiraceae", "Paraliaceae", "Peroniaceae", "Phaeodactylaceae", "Pinnulariaceae", "Plagiogrammaceae", "Pleurosigmataceae", "Rhabdonemataceae", "Rhaphoneidaceae", "Rhizosoleniaceae", "Rhoicospheniaceae", "Rhopalodiaceae", "Scolioneidaceae", "Scoliotropidaceae", "Sellaphoraceae", "Skeletonemaceae", "Stauroneidaceae", "Stephanodiscaceae", "Stephanopyxidaceae", "Striatellaceae", "Surirellaceae", "Tabellariaceae", "Thalassionemataceae", "Thalassiosiraceae", "Toxariaceae", "Triceratiaceae", "Ulnariaceae"], "species_status": ["AMBER", "BLACK", "BLUE", "GREEN", "RED"], "pantheon_assemblage": []};
+const FILTER_OPTIONS = {"kingdom": ["Chromista"], "phylum_division": [], "class": ["Bacillariophyceae"], "order": ["Achnanthales", "Asterolamprales", "Aulacoseirales", "Bacillariales", "Biddulphiales", "Chaetocerotanae incertae sedis", "Corethrales", "Coscinodiscales", "Cymatosirales", "Cymbellales", "Ethmodiscales", "Eunotiales", "Fragilariales", "Hemiaulales", "Leptocylindrales", "Licmophorales", "Lithodesmiales", "Lyrellales", "Mastogloiales", "Melosirales", "Naviculales", "Orthoseirales", "Paraliales", "Rhabdonematales", "Rhaponeidales", "Rhizosoleniales", "Rhopalodiales", "Striatellales", "Surirellales", "Tabellariales", "Thalassionematales", "Thalassiophysales", "Thalassiosirales", "Toxariales", "Triceratiales"], "family": ["Acanthocerataceae", "Achnanthaceae", "Achnanthidiaceae", "Amphipleuraceae", "Anomoeoneidaceae", "Ardissoneaceae", "Asterolampraceae", "Attheyaceae", "Aulacoseiraceae", "Bacillariaceae", "Bellerocheaceae", "Berkeleyaceae", "Biddulphiaceae", "Brachysiraceae", "Catenulaceae", "Cavinulaceae", "Chaetocerotaceae", "Cocconeidaceae", "Corethraceae", "Coscinodiscaceae", "Cosmioneidaceae", "Cymatosiraceae", "Cymbellaceae", "Diadesmidaceae", "Diploneidaceae", "Entomoneidaceae", "Ethmodiscaceae", "Eunotiaceae", "Fragilariaceae", "Gomphonemataceae", "Heliopeltaceae", "Hemiaulaceae", "Hemidiscaceae", "Hyalodiscaceae", "Lauderiaceae", "Leptocylindraceae", "Licmophoraceae", "Lithodesmiaceae", "Lyrellaceae", "Mastogloiaceae", "Melosiraceae", "Naviculaceae", "Naviculales incertae sedis", "Neidiaceae", "Orthoseiraceae", "Paraliaceae", "Peroniaceae", "Phaeodactylaceae", "Pinnulariaceae", "Plagiogrammaceae", "Pleurosigmataceae", "Rhabdonemataceae", "Rhaphoneidaceae", "Rhizosoleniaceae", "Rhoicospheniaceae", "Rhopalodiaceae", "Scolioneidaceae", "Scoliotropidaceae", "Sellaphoraceae", "Skeletonemaceae", "Stauroneidaceae", "Stephanodiscaceae", "Stephanopyxidaceae", "Striatellaceae", "Surirellaceae", "Tabellariaceae", "Thalassionemataceae", "Thalassiosiraceae", "Toxariaceae", "Triceratiaceae", "Ulnariaceae"], "species_status": ["no_records", "shared_bin_interim", "shared_bin_species", "synonym_only", "valid_and_synonym", "valid_name"], "pantheon_assemblage": []};
 const JNCC_COLUMNS = [];
-const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","ORANGE":"#fd7e14","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
-const STATUS_LABELS = {"GREEN": "Valid", "BLUE": "Synonym", "AMBER": "Mixed", "ORANGE": "Interim ID", "RED": "Conflict", "BLACK": "Missing"};
+const STATUS_COLORS = {"valid_name": "#198754", "synonym_only": "#0d6efd", "valid_and_synonym": "#ffc107", "shared_bin_interim": "#fd7e14", "shared_bin_species": "#dc3545", "no_records": "#343a40"};
+const STATUS_LABELS = {"valid_name": "Valid name", "synonym_only": "Synonym only", "valid_and_synonym": "Valid + synonym", "shared_bin_interim": "Shared BIN (interim)", "shared_bin_species": "Shared BIN (species)", "no_records": "No records"};
+const STATUS_ORDER = ["valid_name", "synonym_only", "valid_and_synonym", "shared_bin_interim", "shared_bin_species", "no_records"];
+const ISSUE_LABELS = {"shared_bin_species": "Shares BIN (species)", "shared_bin_interim": "Shares BIN (interim)", "synonym_records": "Synonym records", "valid_name_absent": "Valid name absent", "split_bins": "Split BINs", "no_cluster": "No BIN/OTU", "few_records": "Few records"};
 const DEFAULT_FILTERS = {"class": "Bacillariophyceae"};
-const TABLE_COLUMNS = [{"data": "taxon_name", "title": "Species"}, {"data": "synonyms", "title": "Synonyms", "render": "truncate"}, {"data": "other_names", "title": "Other names", "render": "truncate"}, {"data": "order", "title": "Order"}, {"data": "family", "title": "Family"}, {"data": "species_status", "title": "Status", "render": "status"}, {"data": "bags_grade", "title": "Grade"}, {"data": "number_records", "title": "Records"}, {"data": "gb_records", "title": "UK Records"}, {"data": null, "title": "Data Link", "render": "data_link", "orderable": false}];
+const TABLE_COLUMNS = [{"data": "taxon_name", "title": "Species"}, {"data": "synonyms", "title": "Synonyms", "render": "truncate"}, {"data": "other_names", "title": "Other names", "render": "truncate"}, {"data": "order", "title": "Order"}, {"data": "family", "title": "Family"}, {"data": "species_status", "title": "Status", "render": "status"}, {"data": "issues", "title": "Issues", "render": "issues"}, {"data": "bags_grade", "title": "Grade"}, {"data": "number_records", "title": "Records"}, {"data": "gb_records", "title": "UK Records"}, {"data": null, "title": "Data Link", "render": "data_link", "orderable": false}];
 const DATA_FILE = 'data/diatom_rbcl.json.gz';
 const TSV_FILE = 'data/diatom_rbcl.tsv';
 let DATA = [], filteredData = [], table = null;
@@ -333,7 +352,8 @@ function initializeTable() {
     };
     const RENDERERS = {
         'truncate': truncateRender,
-        'status': (data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:'',
+        'status': (data)=>data?`<span class="status-badge status-${escapeHtml(data)}">${escapeHtml(STATUS_LABELS[data]||data)}</span>`:'',
+        'issues': (data)=>{if(!data)return '';const text=String(data).split(';').filter(Boolean).map(i=>ISSUE_LABELS[i]||i).join(', ');return truncateRender(text);},
         'data_link': dataLinkRender
     };
     const columns = TABLE_COLUMNS.map(col => {
@@ -353,6 +373,10 @@ function applyFilters() {
         if (filters.order && row.order !== filters.order) return false;
         if (filters.family && row.family !== filters.family) return false;
         if (filters.statuses.length > 0 && !filters.statuses.includes(row.species_status)) return false;
+        if (filters.issues.length > 0) {
+            const rowIssues = (row.issues || '').split(';');
+            if (!filters.issues.some(i => rowIssues.includes(i))) return false;
+        }
         if (filters.grades.length > 0 && filters.grades.length < 6 && row.bags_grade && !filters.grades.includes(row.bags_grade)) return false;
         if (filters.habitats.length > 0) {
             const hasHabitat = (filters.habitats.includes('marine') && row.marine_flag === 'Y') || (filters.habitats.includes('freshwater') && row.freshwater === 'Y') || (filters.habitats.includes('terrestrial') && row.terrestrial_freshwater_flag === 'Y') || (filters.habitats.includes('freshwater_ukceh') && row.ukceh_freshwater_list === 'Y');
@@ -384,8 +408,9 @@ function applyFilters() {
     updateUrl(filters);
 }
 function collectFilters() {
-    const activeStatuses = [], activeHabitats = [], activeAssemblages = [], activeGrades = [];
+    const activeStatuses = [], activeHabitats = [], activeAssemblages = [], activeGrades = [], activeIssues = [];
     document.querySelectorAll('.status-btn.active').forEach(btn => activeStatuses.push(btn.dataset.status));
+    document.querySelectorAll('.issue-btn.active').forEach(btn => activeIssues.push(btn.dataset.issue));
     document.querySelectorAll('.bags-btn.active').forEach(btn => activeGrades.push(btn.dataset.grade));
     document.querySelectorAll('.habitat-filter:checked').forEach(cb => activeHabitats.push(cb.value));
     document.querySelectorAll('.assemblage-filter:checked').forEach(cb => activeAssemblages.push(cb.value));
@@ -396,6 +421,7 @@ function collectFilters() {
         order:document.getElementById('filterOrder').value,
         family:document.getElementById('filterFamily').value,
         statuses:activeStatuses,
+        issues:activeIssues,
         grades:activeGrades,
         habitats:activeHabitats,
         assemblages:activeAssemblages,
@@ -414,19 +440,21 @@ function updateActiveFiltersDisplay(filters) {
     if (filters.order) addTag('Order',filters.order,"document.getElementById('filterOrder').value='';applyFilters()");
     if (filters.family) addTag('Family',filters.family,"document.getElementById('filterFamily').value='';applyFilters()");
     // Show status filters when not all are selected
-    const allStatuses = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'];
-    if (filters.statuses.length > 0 && filters.statuses.length < allStatuses.length) {
-        const excludedStatuses = allStatuses.filter(s => !filters.statuses.includes(s));
+    if (filters.statuses.length > 0 && filters.statuses.length < STATUS_ORDER.length) {
+        const excludedStatuses = STATUS_ORDER.filter(s => !filters.statuses.includes(s));
         excludedStatuses.forEach(status => {
-            addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
+            addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status=${status}]').classList.add('active');applyFilters()`);
         });
     }
+    filters.issues.forEach(issue => {
+        addTag('Issue', ISSUE_LABELS[issue] || issue, `document.querySelector('.issue-btn[data-issue=${issue}]').classList.remove('active');applyFilters()`);
+    });
     // Show BAGS grade filters when not all are selected
     const allGrades = ['A','B','C','D','E','F'];
     if (filters.grades.length > 0 && filters.grades.length < allGrades.length) {
         const excludedGrades = allGrades.filter(g => !filters.grades.includes(g));
         excludedGrades.forEach(grade => {
-            addTag('Hiding Grade', grade, `document.querySelector('.bags-btn[data-grade="${grade}"]').classList.add('active');applyFilters()`);
+            addTag('Hiding Grade', grade, `document.querySelector('.bags-btn[data-grade=${grade}]').classList.add('active');applyFilters()`);
         });
     }
     const habitatLabels = {'marine':'Marine (UKSI)','freshwater':'Freshwater (UKSI)','terrestrial':'Terrestrial (UKSI)','freshwater_ukceh':'Freshwater (UKCEH)'};
@@ -450,7 +478,7 @@ function updateCharts() {
     const orderData = {};
     filteredData.forEach(row => {const order = row.order || 'Unknown';const status = row.species_status || 'Unknown';if(!orderData[order])orderData[order]={};orderData[order][status]=(orderData[order][status]||0)+1;});
     const sortedOrders = Object.entries(orderData).map(([order,counts])=>({order,total:Object.values(counts).reduce((a,b)=>a+b,0),counts})).sort((a,b)=>b.total-a.total).slice(0,20);
-    const barTraces = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
+    const barTraces = STATUS_ORDER.map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
     Plotly.newPlot('barChart',barTraces,{barmode:'stack',margin:{t:20,b:100,l:50,r:20},legend:{orientation:'h',y:1.1},xaxis:{tickangle:-45}},{responsive:true});
 }
 function updateUrl(filters) {
@@ -460,7 +488,8 @@ function updateUrl(filters) {
     if(filters.class)params.set('class',filters.class);
     if(filters.order)params.set('order',filters.order);
     if(filters.family)params.set('family',filters.family);
-    if(filters.statuses.length<5)params.set('status',filters.statuses.join(','));
+    if(filters.statuses.length<STATUS_ORDER.length)params.set('status',filters.statuses.join(','));
+    if(filters.issues.length>0)params.set('issues',filters.issues.join(','));
     if(filters.grades.length>0&&filters.grades.length<6)params.set('bags_grade',filters.grades.join(','));
     if(filters.habitats.length>0)params.set('habitat',filters.habitats.join(','));
     if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
@@ -492,6 +521,7 @@ function loadFiltersFromUrl() {
     }
     if(params.get('family'))document.getElementById('filterFamily').value=params.get('family');
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
+    if(params.get('issues')){const issues=params.get('issues').split(',');document.querySelectorAll('.issue-btn').forEach(btn=>btn.classList.toggle('active',issues.includes(btn.dataset.issue)));}
     if(params.get('bags_grade')){const grades=params.get('bags_grade').split(',');document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.toggle('active',grades.includes(btn.dataset.grade)));}
     if(params.get('habitat')){const habitatIdMap={'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};params.get('habitat').split(',').forEach(h=>{const id=habitatIdMap[h];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
@@ -548,6 +578,7 @@ $(document).ready(function() {
         rebuildSelect('filterFamily', getUniqueValues(DATA, 'family'), 'All Families');
         document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
         document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.add('active'));
+        document.querySelectorAll('.issue-btn').forEach(btn=>btn.classList.remove('active'));
         document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
         document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.checked=false);
         document.getElementById('filterPantheonAssemblage').value='';
@@ -562,6 +593,14 @@ $(document).ready(function() {
             applyFilters();
         };
         btn.addEventListener('click', toggleStatus);
+    });
+    // Issue button handlers
+    document.querySelectorAll('.issue-btn').forEach(btn=>{
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            applyFilters();
+        });
     });
     // BAGS grade button handlers
     document.querySelectorAll('.bags-btn').forEach(btn=>{
