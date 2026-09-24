@@ -30,7 +30,8 @@ python scripts/build.py [--data DATA_DIR] [--output OUTPUT_DIR] [--zenodo ZENODO
 3. **Copies** the original TSV files to `docs/data/` so users can download the raw data.
 4. **Generates individual HTML report pages** for each gene/dataset with:
    - Cascading taxonomy filters (kingdom, phylum, class, order, family).
-   - Coverage status toggle buttons (GREEN, BLUE, AMBER, RED, BLACK).
+   - Status toggle buttons with a "What do the statuses mean?" key.
+   - Record issue filter buttons (gene datasets with an `issues` column).
    - Habitat, assemblage, and conservation designation filters.
    - UK records filter (when data is available).
    - Interactive pie chart (coverage overview) and bar chart (gap analysis by order).
@@ -42,17 +43,30 @@ python scripts/build.py [--data DATA_DIR] [--output OUTPUT_DIR] [--zenodo ZENODO
    - Dataset cards linking to each gene report.
    - Database version metadata table (from `metadata/dataset_metadata.tsv`).
    - Optional Zenodo dataset links.
-6. **Detects dataset type** automatically: gene-based datasets use barcode status labels (OK - Valid, OK - Synonym, etc.) while DToL genome datasets use genome pipeline labels (Completed, Assembled, Sequenced, Sampled, Missing).
+6. **Detects dataset type** (from `metadata/datasets.tsv`, or by column sniffing) and uses the matching status definitions in `STATUS_DEFS`: gene, DToL genome or ENA mitogenome.
 
-### Status colour scheme
+### Status codes
 
-| Status | Colour | Gene label        | DToL label  |
-|--------|--------|-------------------|-------------|
-| GREEN  | Green  | OK - Valid        | Completed   |
-| BLUE   | Blue   | OK - Synonym      | Assembled   |
-| AMBER  | Amber  | OK - Valid + Syn  | Sequenced   |
-| RED    | Red    | ID Conflict       | Sampled     |
-| BLACK  | Dark   | Missing           | Missing     |
+`species_status` values are descriptive codes produced by `mind-the-gap`. Colours are applied only at display time (`STATUS_DEFS` in `build.py`).
+
+**Gene datasets**
+
+| Code | Label | Colour | Meaning |
+|------|-------|--------|---------|
+| `valid_name` | Valid name | Green | Records only under the valid name, no BIN/OTU sharing |
+| `synonym_only` | Synonym only | Blue | Records only under synonym(s); valid name absent |
+| `valid_and_synonym` | Valid + synonym | Amber | Records under both valid name and synonym(s) |
+| `shared_bin_interim` | Shared BIN (interim) | Orange | BIN/OTU shared only with interim/placeholder names |
+| `shared_bin_species` | Shared BIN (species) | Red | BIN/OTU shared with another formally named species |
+| `no_records` | No records | Dark | No records under any name |
+
+Gene datasets also carry an `issues` column (`;`-separated flags: `shared_bin_species`, `shared_bin_interim`, `synonym_records`, `valid_name_absent`, `split_bins`, `no_cluster`, `few_records`), shown in the table and available as a filter.
+
+**DToL genome datasets**: `annotation_complete` (Annotated), `assembly_submitted` (Assembled), `raw_data_submitted` (Sequenced), `biosample_submitted` (Sampled), `not_in_dtol` (Not in DToL).
+
+**ENA mitogenome datasets**: `mitogenome_present` (Has mitogenome), `no_mitogenome` (No mitogenome).
+
+Older TSVs with colour values (GREEN, BLUE, AMBER, ORANGE, RED, BLACK) still build: `build.py` maps them to the codes above. To upgrade the files themselves, run `python <mind-the-gap>/gap_analysis/convert_legacy_status.py data/*.tsv`.
 
 ### Default taxonomy filters
 
@@ -113,8 +127,8 @@ python ../scripts/calc_stats.py
 3. Performs an inner merge across all datasets on `taxon_name`.
 4. Reports:
    - **Species in common** across all datasets.
-   - **Species with at least one GREEN** status (has barcode data in at least one gene region).
-   - **True gaps** -- species with BLACK status across every gene (no data anywhere).
+   - **Species with at least one `valid_name`** status (has barcode data in at least one gene region).
+   - **True gaps** -- species with `no_records` status across every gene (no data anywhere).
 
 ### Example output
 
@@ -124,11 +138,11 @@ midori_12s: 72456 unique species
 ...
 
 Species in common across all datasets: 70234
-Species with at least one GREEN: 45678
-Species with BLACK across all genes (true gaps): 12345
+Species with at least one valid_name: 45678
+Species with no_records across all genes (true gaps): 12345
 
 === VALUES FOR WEBSITE ===
 Valid Species Assessed: 70234
-Species with Data (at least one GREEN): 45678
-True Gaps (BLACK everywhere): 12345
+Species with Data (at least one valid_name): 45678
+True Gaps (no_records everywhere): 12345
 ```
