@@ -94,7 +94,7 @@ Best approach: add a step in `build.py` to copy logo assets into `docs/`.
 ---
 
 ## What NOT to Change
-- **Status badge colours** (`--ukbol-green`, `--ukbol-amber`, `--ukbol-red`, `--ukbol-blue`, `--ukbol-black`) — these are data-encoding colours for gap analysis categories and must remain as-is
+- **Status badge colours** (`--ukbol-green`, `--ukbol-amber`, `--ukbol-red`, `--ukbol-blue`, `--ukbol-black`) — these are data-encoding colours for gap analysis categories and must remain as-is. Status values are now descriptive codes (e.g. `valid_name`, `shared_bin_species`); the colour for each code is defined in `STATUS_DEFS` in `scripts/build.py`
 - **Chart colours** (Plotly pie/bar charts use the same status palette) — no change
 - **DataTables styling** — functional, no visual alignment needed
 - **Bootstrap version** — already matching at 5.3.3

@@ -25,35 +25,86 @@ import argparse
 import re
 from fnmatch import fnmatch
 
-STATUS_COLORS = {
-    'GREEN': '#198754', 'AMBER': '#ffc107', 'ORANGE': '#fd7e14',
-    'RED': '#dc3545', 'BLUE': '#0d6efd', 'BLACK': '#343a40',
+# Status definitions per dataset type, in display order. Each entry is
+# (code, label, colour, description). species_status values in the data are
+# descriptive codes produced by mind-the-gap; colours are for display only.
+# The first entry of each list is the "covered" status shown on index cards.
+STATUS_DEFS = {
+    'gene': [
+        ('valid_name', 'Valid name', '#198754',
+         'Records only under the accepted (valid) name, with no BIN/OTU shared with other names'),
+        ('synonym_only', 'Synonym only', '#0d6efd',
+         'Records only under synonym(s); the valid name is absent from the reference database'),
+        ('valid_and_synonym', 'Valid + synonym', '#ffc107',
+         'Records under both the valid name and synonym(s); names need consolidating'),
+        ('shared_bin_interim', 'Shared BIN (interim)', '#fd7e14',
+         'BIN/OTU shared only with interim or placeholder names (e.g. sp., cf., numeric codes)'),
+        ('shared_bin_species', 'Shared BIN (species)', '#dc3545',
+         'BIN/OTU shared with at least one other formally named species; possible misidentification or taxonomic conflict'),
+        ('no_records', 'No records', '#343a40',
+         'No records under the valid name or any synonym'),
+    ],
+    'dtol': [
+        ('annotation_complete', 'Annotated', '#198754', 'Genome annotated and published'),
+        ('assembly_submitted', 'Assembled', '#0d6efd', 'Genome assembly submitted'),
+        ('raw_data_submitted', 'Sequenced', '#ffc107', 'Raw sequencing data submitted'),
+        ('biosample_submitted', 'Sampled', '#dc3545', 'Sample registered in BioSamples; sequencing pending'),
+        ('not_in_dtol', 'Not in DToL', '#343a40', 'Species not in the Darwin Tree of Life pipeline'),
+    ],
+    'mitogenome': [
+        ('mitogenome_present', 'Has mitogenome', '#198754', 'Mitogenome(s) available in ENA'),
+        ('no_mitogenome', 'No mitogenome', '#343a40', 'No mitogenome found in ENA'),
+    ],
 }
 
-# Shortened status labels for display (gene datasets)
-STATUS_LABELS = {
-    'GREEN': 'Valid',
-    'BLUE': 'Synonym',
-    'AMBER': 'Mixed',
-    'ORANGE': 'Interim ID',
-    'RED': 'Conflict',
-    'BLACK': 'Missing',
+# Legacy traffic-light values from older mind-the-gap outputs, mapped to codes
+LEGACY_STATUS_MAP = {
+    'gene': {'GREEN': 'valid_name', 'BLUE': 'synonym_only', 'AMBER': 'valid_and_synonym',
+             'ORANGE': 'shared_bin_interim', 'RED': 'shared_bin_species', 'BLACK': 'no_records'},
+    'dtol': {'GREEN': 'annotation_complete', 'BLUE': 'assembly_submitted', 'AMBER': 'raw_data_submitted',
+             'RED': 'biosample_submitted', 'BLACK': 'not_in_dtol'},
+    'mitogenome': {'GREEN': 'mitogenome_present', 'BLACK': 'no_mitogenome'},
 }
 
-# Status labels for DToL genome datasets
-DTOL_STATUS_LABELS = {
-    'GREEN': 'Completed',
-    'BLUE': 'Assembled',
-    'AMBER': 'Sequenced',
-    'RED': 'Sampled',
-    'BLACK': 'Missing',
-}
+# Issue flags in the gene datasets' `issues` column (';'-separated), in display order
+ISSUE_DEFS = [
+    ('shared_bin_species', 'Shares BIN (species)', 'A BIN/OTU is shared with another formally named species'),
+    ('shared_bin_interim', 'Shares BIN (interim)', 'A BIN/OTU is shared with an interim or placeholder name'),
+    ('synonym_records', 'Synonym records', 'Some records are under a synonym rather than the valid name'),
+    ('valid_name_absent', 'Valid name absent', 'Records exist, but none under the valid name'),
+    ('split_bins', 'Split BINs', 'Records fall in more than one BIN/OTU'),
+    ('no_cluster', 'No BIN/OTU', 'Records exist, but none has a BIN/OTU assigned'),
+    ('few_records', 'Few records', 'Fewer than 3 records'),
+]
 
-# Status labels for ENA mitogenome datasets
-MITOGENOME_STATUS_LABELS = {
-    'GREEN': 'Has Mitogenome',
-    'BLACK': 'Missing',
-}
+# Statuses whose badge colour needs dark text for contrast
+DARK_TEXT_COLORS = {'#ffc107'}
+
+
+def status_colors(defs):
+    return {code: color for code, _, color, _ in defs}
+
+
+def status_labels(defs):
+    return {code: label for code, label, _, _ in defs}
+
+
+def status_css():
+    """Badge and filter-button CSS for every status code across dataset types."""
+    rules = []
+    seen = set()
+    for defs in STATUS_DEFS.values():
+        for code, _, color, _ in defs:
+            if code in seen:
+                continue
+            seen.add(code)
+            text = '#000' if color in DARK_TEXT_COLORS else '#fff'
+            rules.append(f'.status-{code}{{background:{color};color:{text};}}')
+            rules.append(f'.btn-status-{code}{{color:{color};border-color:{color};}}'
+                         f'.btn-status-{code}:hover,.btn-status-{code}.active'
+                         f'{{color:{text};background-color:{color};border-color:{color};}}')
+    return ''.join(rules)
+
 
 # Dataset metadata is loaded from metadata/datasets.tsv at runtime.
 # That file controls: stable_id, display_name, gene_key, input_pattern,
@@ -71,6 +122,7 @@ DISPLAY_COLUMNS = [
     ('order', 'Order'),
     ('family', 'Family'),
     ('species_status', 'Status'),
+    ('issues', 'Issues'),
     ('bags_grade', 'Grade'),
     ('number_records', 'Records'),
     ('gb_records', 'UK Records'),
@@ -230,8 +282,8 @@ def compute_cross_gene_stats(dataframes):
 
     Returns dict with:
     - valid_species: union of unique species across all datasets
-    - species_with_data: species with GREEN status in at least one dataset
-    - true_gaps: species with BLACK status in every dataset they appear in
+    - species_with_data: species with valid_name status in at least one dataset
+    - true_gaps: species with no_records status in every dataset they appear in
     """
     if not dataframes:
         return {'valid_species': 0, 'species_with_data': 0, 'true_gaps': 0}
@@ -256,18 +308,18 @@ def compute_cross_gene_stats(dataframes):
 
     status_cols = [c for c in base_df.columns if c.startswith('status_')]
 
-    # Species with at least one GREEN in any dataset they appear in
-    has_green = (base_df[status_cols] == 'GREEN').any(axis=1)
-    species_with_data = int(has_green.sum())
+    # Species with at least one valid_name status in any dataset they appear in
+    has_data = (base_df[status_cols] == 'valid_name').any(axis=1)
+    species_with_data = int(has_data.sum())
 
-    # True gaps: species whose status is BLACK in every dataset they appear in.
+    # True gaps: species whose status is no_records in every dataset they appear in.
     # NaN means the dataset doesn't cover that species — those columns are ignored.
     def _is_true_gap(row):
         present = [v for v in row if pd.notna(v) and v != '']
-        return bool(present) and all(s == 'BLACK' for s in present)
+        return bool(present) and all(s == 'no_records' for s in present)
 
-    all_black = base_df[status_cols].apply(_is_true_gap, axis=1)
-    true_gaps = int(all_black.sum())
+    no_records_everywhere = base_df[status_cols].apply(_is_true_gap, axis=1)
+    true_gaps = int(no_records_everywhere.sum())
     
     return {
         'valid_species': len(base_df),
@@ -285,8 +337,8 @@ def generate_index_html(genes_data, zenodo_links, output_dir, build_date, cross_
         true_gaps = cross_gene_stats['true_gaps']
     else:
         valid_species = genes_data[0]['stats']['total_species'] if genes_data else 0
-        species_with_data = sum(g['stats']['status_counts'].get('GREEN', 0) for g in genes_data)
-        true_gaps = sum(g['stats']['status_counts'].get('BLACK', 0) for g in genes_data)
+        species_with_data = sum(g['stats']['status_counts'].get('valid_name', 0) for g in genes_data)
+        true_gaps = sum(g['stats']['status_counts'].get('no_records', 0) for g in genes_data)
 
     html_parts = []
     html_parts.append(f'''<!DOCTYPE html>
@@ -314,7 +366,7 @@ h1,h2{{color:var(--ukbol-primary);}}h3{{color:var(--ukbol-primary-mid);}}
 .gene-card:hover{{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,77,90,.15);}}
 .gene-card .card-header{{background:linear-gradient(135deg,#1a4d5a 0%,#2b7a8c 100%);color:#fff;font-weight:600;padding:1rem 1.25rem;}}
 .status-badge{{display:inline-block;padding:.25em .6em;font-size:.75rem;font-weight:600;border-radius:4px;color:#fff;}}
-.status-GREEN{{background:var(--ukbol-green);}}.status-AMBER{{background:var(--ukbol-amber);color:#000;}}.status-ORANGE{{background:var(--ukbol-orange);}}.status-RED{{background:var(--ukbol-red);}}.status-BLUE{{background:var(--ukbol-blue);}}.status-BLACK{{background:var(--ukbol-black);}}
+{status_css()}
 .mini-bar{{height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;display:flex;}}
 .mini-bar-segment{{height:100%;}}
 .zenodo-card{{border-left:4px solid var(--ukbol-primary-mid);}}
@@ -366,25 +418,25 @@ footer .footer-logo{{height:60px;filter:brightness(0) invert(1);}}
             stats = gene['stats']
             status_counts = stats['status_counts']
             total = stats['total_species']
+            defs = gene.get('status_defs', STATUS_DEFS['gene'])
+            covered_code = defs[0][0]
             bar_segments = []
-            for status in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK']:
-                count = status_counts.get(status, 0)
+            for code, label, color, description in defs:
+                count = status_counts.get(code, 0)
                 if count > 0:
                     pct = (count / total) * 100
-                    color = STATUS_COLORS.get(status, '#6c757d')
-                    bar_segments.append(f'<div class="mini-bar-segment" style="width:{pct:.1f}%;background:{color}"></div>')
+                    bar_segments.append(f'<div class="mini-bar-segment" title="{label}: {count:,}" style="width:{pct:.1f}%;background:{color}"></div>')
             bar_html = ''.join(bar_segments)
 
-            gene_labels = gene.get('status_labels', STATUS_LABELS)
-            badges = ''.join([f'<small class="status-badge status-{s}">{gene_labels.get(s, s)}: {status_counts.get(s, 0):,}</small>'
-                             for s in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK'] if status_counts.get(s, 0) > 0])
+            badges = ''.join([f'<small class="status-badge status-{code}" title="{description}">{label}: {status_counts.get(code, 0):,}</small>'
+                             for code, label, color, description in defs if status_counts.get(code, 0) > 0])
 
             html_parts.append(f'''<div class="col-md-6 col-lg-4">
 <a href="{gene['filename']}" class="text-decoration-none">
 <div class="gene-card h-100">
 <div class="card-header">{gene['display_name']}</div>
 <div class="card-body">
-<div class="d-flex justify-content-between mb-2"><span class="text-muted">{total:,} species</span><span class="text-success fw-bold">{status_counts.get('GREEN', 0):,} covered</span></div>
+<div class="d-flex justify-content-between mb-2"><span class="text-muted">{total:,} species</span><span class="text-success fw-bold">{status_counts.get(covered_code, 0):,} covered</span></div>
 <div class="mini-bar mb-3">{bar_html}</div>
 <div class="d-flex flex-wrap gap-1">{badges}</div>
 </div></div></a></div>''')
@@ -457,27 +509,52 @@ def get_default_filter_for_gene(gene_name):
     return {}
 
 
-def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_labels=None, default_filter=None):
-    if status_labels is None:
-        status_labels = STATUS_LABELS
+def generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records=False, status_defs=None, default_filter=None):
+    if status_defs is None:
+        status_defs = STATUS_DEFS['gene']
     if default_filter is None:
         default_filter = get_default_filter_for_gene(gene_name)
     jncc_info = [{'original': col, 'display': clean_column_name(col)} for col in jncc_columns]
 
-    # Build status filter buttons from labels
-    btn_classes = {'GREEN': 'btn-outline-success', 'BLUE': 'btn-outline-primary', 'AMBER': 'btn-outline-warning', 'ORANGE': 'btn-outline-orange', 'RED': 'btn-outline-danger', 'BLACK': 'btn-outline-dark'}
+    # Build status filter buttons and key from the dataset type's definitions
     status_buttons = '\n'.join([
-        f'<button class="btn btn-sm {btn_classes[s]} status-btn active" data-status="{s}">{status_labels[s]}</button>'
-        for s in ['GREEN', 'BLUE', 'AMBER', 'ORANGE', 'RED', 'BLACK'] if s in status_labels
+        f'<button class="btn btn-sm btn-status-{code} status-btn active" data-status="{code}" title="{description}">{label}</button>'
+        for code, label, color, description in status_defs
     ])
+    status_key = ''.join([
+        f'<div class="mb-1"><span class="status-badge status-{code}">{label}</span> {description}</div>'
+        for code, label, color, description in status_defs
+    ])
+
+    # Issue filter buttons, only for datasets with an issues column
+    has_issues = 'issues' in df.columns and (df['issues'] != '').any()
+    issue_filter_html = ''
+    if has_issues:
+        issue_buttons = '\n'.join([
+            f'<button class="btn btn-sm btn-outline-secondary issue-btn" data-issue="{code}" title="{description}">{label}</button>'
+            for code, label, description in ISSUE_DEFS
+        ])
+        issue_key = ''.join([f'<div class="mb-1"><strong>{label}</strong>: {description}</div>'
+                             for code, label, description in ISSUE_DEFS])
+        issue_filter_html = '''<div class="mb-3">
+<label class="form-label fw-bold">Record Issues</label>
+<div class="small text-muted mb-1">Show species with any selected issue</div>
+<div class="d-flex flex-wrap gap-1">
+''' + issue_buttons + '''
+</div>
+<details class="status-key mt-2"><summary>What do the issues mean?</summary><div class="mt-2">''' + issue_key + '''</div></details>
+</div>
+'''
 
     # Build table column definitions based on columns present in the dataframe
     # Special renderers: 'truncate' for long text, 'status' for colored badges, 'data_link' for external links
-    COLUMN_RENDERERS = {'synonyms': 'truncate', 'other_names': 'truncate', 'species_status': 'status'}
+    COLUMN_RENDERERS = {'synonyms': 'truncate', 'other_names': 'truncate', 'species_status': 'status', 'issues': 'issues'}
     table_columns = []
     for col_name, col_title in DISPLAY_COLUMNS:
         if col_name == 'data_link':
             table_columns.append({'data': None, 'title': 'Data Link', 'render': 'data_link', 'orderable': False})
+        elif col_name == 'issues' and not has_issues:
+            continue
         elif col_name in df.columns:
             col_def = {'data': col_name, 'title': col_title}
             if col_name in COLUMN_RENDERERS:
@@ -508,7 +585,9 @@ h1,h2{color:var(--ukbol-primary);}h3{color:var(--ukbol-primary-mid);}
 .chart-container{overflow:hidden;}
 .filter-panel h5{margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e9ecef;}
 .status-badge{display:inline-block;padding:.15em .45em;font-size:.7rem;font-weight:600;border-radius:4px;color:#fff;white-space:nowrap;}
-.status-GREEN{background:var(--ukbol-green);}.status-AMBER{background:var(--ukbol-amber);color:#000;}.status-ORANGE{background:var(--ukbol-orange);}.status-RED{background:var(--ukbol-red);}.status-BLUE{background:var(--ukbol-blue);}.status-BLACK{background:var(--ukbol-black);}
+''' + status_css() + '''
+.status-key summary{cursor:pointer;color:var(--ukbol-primary-mid);font-size:.85rem;}
+.status-key{font-size:.8rem;}
 .filter-tag{display:inline-flex;align-items:center;gap:.25rem;background:#e7f1ff;color:#0d6efd;padding:.25rem .75rem;border-radius:20px;font-size:.85rem;margin:.25rem;}
 .filter-tag button{background:none;border:none;color:inherit;padding:0;font-size:1rem;cursor:pointer;}
 #activeFilters:empty::before{content:"No filters active";color:#6c757d;font-style:italic;}
@@ -528,17 +607,16 @@ table.dataTable th{font-size:.75rem;}
 .data-link a{text-decoration:none;margin-right:0.25rem;font-size:.85rem;}
 .data-link a:hover{opacity:0.7;}
 /* Mobile support */
-.btn-outline-orange{color:#fd7e14;border-color:#fd7e14;}.btn-outline-orange:hover,.btn-outline-orange.active{color:#fff;background-color:#fd7e14;border-color:#fd7e14;}
 .btn-bags-A{color:#198754;border-color:#198754;}.btn-bags-A:hover,.btn-bags-A.active{color:#fff;background-color:#198754;border-color:#198754;}
 .btn-bags-B{color:#2e9e6b;border-color:#2e9e6b;}.btn-bags-B:hover,.btn-bags-B.active{color:#fff;background-color:#2e9e6b;border-color:#2e9e6b;}
 .btn-bags-D{color:#4a9e7a;border-color:#7ecba3;}.btn-bags-D:hover,.btn-bags-D.active{color:#fff;background-color:#7ecba3;border-color:#7ecba3;}
 .btn-bags-C{color:#0d6efd;border-color:#0d6efd;}.btn-bags-C:hover,.btn-bags-C.active{color:#fff;background-color:#0d6efd;border-color:#0d6efd;}
 .btn-bags-E{color:#dc3545;border-color:#dc3545;}.btn-bags-E:hover,.btn-bags-E.active{color:#fff;background-color:#dc3545;border-color:#dc3545;}
 .btn-bags-F{color:#343a40;border-color:#343a40;}.btn-bags-F:hover,.btn-bags-F.active{color:#fff;background-color:#343a40;border-color:#343a40;}
-.status-btn,.bags-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
-@media(hover:none){.status-btn:hover,.bags-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
+.status-btn,.bags-btn,.issue-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;}
+@media(hover:none){.status-btn:hover,.bags-btn:hover,.issue-btn:hover{color:inherit;background-color:inherit;border-color:inherit;}}
 .filter-panel select,.filter-panel input,.filter-panel button{font-size:16px;}
-@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn,.bags-btn{padding:.5rem .75rem;margin:.25rem;}}
+@media(max-width:991px){.filter-panel{margin-bottom:1rem;}.status-btn,.bags-btn,.issue-btn{padding:.5rem .75rem;margin:.25rem;}}
 </style>
 </head>
 <body>
@@ -567,11 +645,13 @@ table.dataTable th{font-size:.75rem;}
 <select id="filterFamily" class="form-select form-select-sm"><option value="">All Families</option></select>
 </div>
 <div class="mb-3">
-<label class="form-label fw-bold">Coverage Status</label>
+<label class="form-label fw-bold">Status</label>
 <div class="d-flex flex-wrap gap-1">
 ''' + status_buttons + '''
-</div></div>
-<div class="mb-3">
+</div>
+<details class="status-key mt-2"><summary>What do the statuses mean?</summary><div class="mt-2">''' + status_key + '''</div></details>
+</div>
+''' + issue_filter_html + '''<div class="mb-3">
 <label class="form-label fw-bold">BAGS Grade</label>
 <div class="d-flex flex-wrap gap-1">
 <button class="btn btn-sm btn-bags-A bags-btn active" data-grade="A">A</button>
@@ -635,8 +715,10 @@ table.dataTable th{font-size:.75rem;}
 <script>
 const FILTER_OPTIONS = ''' + json.dumps(filter_options) + ''';
 const JNCC_COLUMNS = ''' + json.dumps(jncc_info) + ''';
-const STATUS_COLORS = {"GREEN":"#198754","AMBER":"#ffc107","ORANGE":"#fd7e14","RED":"#dc3545","BLUE":"#0d6efd","BLACK":"#343a40"};
-const STATUS_LABELS = ''' + json.dumps(status_labels) + ''';
+const STATUS_COLORS = ''' + json.dumps(status_colors(status_defs)) + ''';
+const STATUS_LABELS = ''' + json.dumps(status_labels(status_defs)) + ''';
+const STATUS_ORDER = ''' + json.dumps([d[0] for d in status_defs]) + ''';
+const ISSUE_LABELS = ''' + json.dumps({code: label for code, label, _ in ISSUE_DEFS}) + ''';
 const DEFAULT_FILTERS = ''' + json.dumps(default_filter) + ''';
 const TABLE_COLUMNS = ''' + json.dumps(table_columns) + ''';
 const DATA_FILE = 'data/''' + gene_name + '''.json.gz';
@@ -814,7 +896,8 @@ function initializeTable() {
     };
     const RENDERERS = {
         'truncate': truncateRender,
-        'status': (data)=>data?`<span class="status-badge status-${data}">${STATUS_LABELS[data]||data}</span>`:'',
+        'status': (data)=>data?`<span class="status-badge status-${escapeHtml(data)}">${escapeHtml(STATUS_LABELS[data]||data)}</span>`:'',
+        'issues': (data)=>{if(!data)return '';const text=String(data).split(';').filter(Boolean).map(i=>ISSUE_LABELS[i]||i).join(', ');return truncateRender(text);},
         'data_link': dataLinkRender
     };
     const columns = TABLE_COLUMNS.map(col => {
@@ -834,6 +917,10 @@ function applyFilters() {
         if (filters.order && row.order !== filters.order) return false;
         if (filters.family && row.family !== filters.family) return false;
         if (filters.statuses.length > 0 && !filters.statuses.includes(row.species_status)) return false;
+        if (filters.issues.length > 0) {
+            const rowIssues = (row.issues || '').split(';');
+            if (!filters.issues.some(i => rowIssues.includes(i))) return false;
+        }
         if (filters.grades.length > 0 && filters.grades.length < 6 && row.bags_grade && !filters.grades.includes(row.bags_grade)) return false;
         if (filters.habitats.length > 0) {
             const hasHabitat = (filters.habitats.includes('marine') && row.marine_flag === 'Y') || (filters.habitats.includes('freshwater') && row.freshwater === 'Y') || (filters.habitats.includes('terrestrial') && row.terrestrial_freshwater_flag === 'Y') || (filters.habitats.includes('freshwater_ukceh') && row.ukceh_freshwater_list === 'Y');
@@ -865,8 +952,9 @@ function applyFilters() {
     updateUrl(filters);
 }
 function collectFilters() {
-    const activeStatuses = [], activeHabitats = [], activeAssemblages = [], activeGrades = [];
+    const activeStatuses = [], activeHabitats = [], activeAssemblages = [], activeGrades = [], activeIssues = [];
     document.querySelectorAll('.status-btn.active').forEach(btn => activeStatuses.push(btn.dataset.status));
+    document.querySelectorAll('.issue-btn.active').forEach(btn => activeIssues.push(btn.dataset.issue));
     document.querySelectorAll('.bags-btn.active').forEach(btn => activeGrades.push(btn.dataset.grade));
     document.querySelectorAll('.habitat-filter:checked').forEach(cb => activeHabitats.push(cb.value));
     document.querySelectorAll('.assemblage-filter:checked').forEach(cb => activeAssemblages.push(cb.value));
@@ -877,6 +965,7 @@ function collectFilters() {
         order:document.getElementById('filterOrder').value,
         family:document.getElementById('filterFamily').value,
         statuses:activeStatuses,
+        issues:activeIssues,
         grades:activeGrades,
         habitats:activeHabitats,
         assemblages:activeAssemblages,
@@ -895,19 +984,21 @@ function updateActiveFiltersDisplay(filters) {
     if (filters.order) addTag('Order',filters.order,"document.getElementById('filterOrder').value='';applyFilters()");
     if (filters.family) addTag('Family',filters.family,"document.getElementById('filterFamily').value='';applyFilters()");
     // Show status filters when not all are selected
-    const allStatuses = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'];
-    if (filters.statuses.length > 0 && filters.statuses.length < allStatuses.length) {
-        const excludedStatuses = allStatuses.filter(s => !filters.statuses.includes(s));
+    if (filters.statuses.length > 0 && filters.statuses.length < STATUS_ORDER.length) {
+        const excludedStatuses = STATUS_ORDER.filter(s => !filters.statuses.includes(s));
         excludedStatuses.forEach(status => {
-            addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status="${status}"]').classList.add('active');applyFilters()`);
+            addTag('Hiding', STATUS_LABELS[status] || status, `document.querySelector('.status-btn[data-status=${status}]').classList.add('active');applyFilters()`);
         });
     }
+    filters.issues.forEach(issue => {
+        addTag('Issue', ISSUE_LABELS[issue] || issue, `document.querySelector('.issue-btn[data-issue=${issue}]').classList.remove('active');applyFilters()`);
+    });
     // Show BAGS grade filters when not all are selected
     const allGrades = ['A','B','C','D','E','F'];
     if (filters.grades.length > 0 && filters.grades.length < allGrades.length) {
         const excludedGrades = allGrades.filter(g => !filters.grades.includes(g));
         excludedGrades.forEach(grade => {
-            addTag('Hiding Grade', grade, `document.querySelector('.bags-btn[data-grade="${grade}"]').classList.add('active');applyFilters()`);
+            addTag('Hiding Grade', grade, `document.querySelector('.bags-btn[data-grade=${grade}]').classList.add('active');applyFilters()`);
         });
     }
     const habitatLabels = {'marine':'Marine (UKSI)','freshwater':'Freshwater (UKSI)','terrestrial':'Terrestrial (UKSI)','freshwater_ukceh':'Freshwater (UKCEH)'};
@@ -931,7 +1022,7 @@ function updateCharts() {
     const orderData = {};
     filteredData.forEach(row => {const order = row.order || 'Unknown';const status = row.species_status || 'Unknown';if(!orderData[order])orderData[order]={};orderData[order][status]=(orderData[order][status]||0)+1;});
     const sortedOrders = Object.entries(orderData).map(([order,counts])=>({order,total:Object.values(counts).reduce((a,b)=>a+b,0),counts})).sort((a,b)=>b.total-a.total).slice(0,20);
-    const barTraces = ['GREEN','BLUE','AMBER','ORANGE','RED','BLACK'].map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
+    const barTraces = STATUS_ORDER.map(status=>({x:sortedOrders.map(o=>o.order),y:sortedOrders.map(o=>o.counts[status]||0),name:STATUS_LABELS[status]||status,type:'bar',marker:{color:STATUS_COLORS[status]}}));
     Plotly.newPlot('barChart',barTraces,{barmode:'stack',margin:{t:20,b:100,l:50,r:20},legend:{orientation:'h',y:1.1},xaxis:{tickangle:-45}},{responsive:true});
 }
 function updateUrl(filters) {
@@ -941,7 +1032,8 @@ function updateUrl(filters) {
     if(filters.class)params.set('class',filters.class);
     if(filters.order)params.set('order',filters.order);
     if(filters.family)params.set('family',filters.family);
-    if(filters.statuses.length<5)params.set('status',filters.statuses.join(','));
+    if(filters.statuses.length<STATUS_ORDER.length)params.set('status',filters.statuses.join(','));
+    if(filters.issues.length>0)params.set('issues',filters.issues.join(','));
     if(filters.grades.length>0&&filters.grades.length<6)params.set('bags_grade',filters.grades.join(','));
     if(filters.habitats.length>0)params.set('habitat',filters.habitats.join(','));
     if(filters.assemblages.length>0)params.set('assemblage',filters.assemblages.join(','));
@@ -973,6 +1065,7 @@ function loadFiltersFromUrl() {
     }
     if(params.get('family'))document.getElementById('filterFamily').value=params.get('family');
     if(params.get('status')){const statuses=params.get('status').split(',');document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.toggle('active',statuses.includes(btn.dataset.status)));}
+    if(params.get('issues')){const issues=params.get('issues').split(',');document.querySelectorAll('.issue-btn').forEach(btn=>btn.classList.toggle('active',issues.includes(btn.dataset.issue)));}
     if(params.get('bags_grade')){const grades=params.get('bags_grade').split(',');document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.toggle('active',grades.includes(btn.dataset.grade)));}
     if(params.get('habitat')){const habitatIdMap={'marine':'habitatMarine','freshwater':'habitatFreshwater','terrestrial':'habitatTerrestrial','freshwater_ukceh':'habitatFreshwaterUkceh'};params.get('habitat').split(',').forEach(h=>{const id=habitatIdMap[h];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
     if(params.get('assemblage')){const assemblageIdMap={'freshbase':'assemblageFreshbase'};params.get('assemblage').split(',').forEach(a=>{const id=assemblageIdMap[a];if(id){const cb=document.getElementById(id);if(cb)cb.checked=true;}});}
@@ -1029,6 +1122,7 @@ $(document).ready(function() {
         rebuildSelect('filterFamily', getUniqueValues(DATA, 'family'), 'All Families');
         document.querySelectorAll('.status-btn').forEach(btn=>btn.classList.add('active'));
         document.querySelectorAll('.bags-btn').forEach(btn=>btn.classList.add('active'));
+        document.querySelectorAll('.issue-btn').forEach(btn=>btn.classList.remove('active'));
         document.querySelectorAll('.habitat-filter').forEach(cb=>cb.checked=false);
         document.querySelectorAll('.assemblage-filter').forEach(cb=>cb.checked=false);
         document.getElementById('filterPantheonAssemblage').value='';
@@ -1043,6 +1137,14 @@ $(document).ready(function() {
             applyFilters();
         };
         btn.addEventListener('click', toggleStatus);
+    });
+    // Issue button handlers
+    document.querySelectorAll('.issue-btn').forEach(btn=>{
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            btn.classList.toggle('active');
+            applyFilters();
+        });
     });
     // BAGS grade button handlers
     document.querySelectorAll('.bags-btn').forEach(btn=>{
@@ -1156,12 +1258,15 @@ def main():
             is_dtol      = 'dtol_status' in df.columns
             is_mitogenome = 'mitogenome_count' in df.columns
 
-        if is_dtol:
-            status_labels = DTOL_STATUS_LABELS
-        elif is_mitogenome:
-            status_labels = MITOGENOME_STATUS_LABELS
-        else:
-            status_labels = STATUS_LABELS
+        status_type = 'dtol' if is_dtol else ('mitogenome' if is_mitogenome else 'gene')
+        status_defs = STATUS_DEFS[status_type]
+
+        # Accept older colour-coded outputs by mapping them to status codes
+        if 'species_status' in df.columns:
+            legacy = df['species_status'].isin(LEGACY_STATUS_MAP[status_type].keys())
+            if legacy.any():
+                df['species_status'] = df['species_status'].replace(LEGACY_STATUS_MAP[status_type])
+                print(f"  Mapped {int(legacy.sum()):,} legacy colour status values to codes")
 
         # If no default_filter from registry, use keyword fallback
         if not default_filter:
@@ -1204,13 +1309,13 @@ def main():
             print(f"  - TSV already in output directory")
         
         # Generate HTML
-        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_labels, default_filter)
+        generate_report_html(gene_name, display_name, df, stats, jncc_columns, filter_options, output_dir, build_date, has_gb_records, status_defs, default_filter)
         
         genes_data.append({
             'filename': f"{gene_name}.html",
             'display_name': display_name,
             'stats': stats,
-            'status_labels': status_labels,
+            'status_defs': status_defs,
             'dataset_type': dataset_type,
         })
     

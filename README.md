@@ -92,7 +92,7 @@ Main build script that converts gap analysis TSV files into the interactive web 
 
 ### `scripts/calc_stats.py`
 
-Standalone utility that calculates cross-gene coverage statistics from the raw TSV files. Reports the number of species in common across all datasets, species with at least one GREEN status, and true gaps (BLACK across all genes). See [`scripts/README.md`](scripts/README.md) for usage.
+Standalone utility that calculates cross-gene coverage statistics from the raw TSV files. Reports the number of species in common across all datasets, species with at least one `valid_name` status, and true gaps (`no_records` across all genes). See [`scripts/README.md`](scripts/README.md) for usage.
 
 ### `update.bat`
 
@@ -104,7 +104,8 @@ Windows batch script that automates the monthly update workflow:
 ## Features
 
 - **Interactive Filtering**: Filter by taxonomy (cascading dropdowns), habitat, assemblage, and conservation status
-- **Coverage Status**: Traffic-light system -- GREEN (valid), BLUE (synonym), AMBER (valid + synonym), RED (ID conflict), BLACK (missing)
+- **Status**: Each species shows the main issue with its records -- Valid name, Synonym only, Valid + synonym, Shared BIN (interim), Shared BIN (species) or No records -- with a colour for quick scanning and an on-page key explaining each one
+- **Record Issues**: Gene datasets also list every issue found (shared BINs, synonym records, valid name absent, split BINs, no BIN/OTU, few records) and can be filtered by issue
 - **Shareable URLs**: Filtered views can be shared via URL parameters
 - **Dynamic Charts**: Pie chart (coverage overview) and bar chart (top 20 orders) update with filters
 - **CSV/TSV Download**: Download filtered results as CSV or the complete dataset as TSV
